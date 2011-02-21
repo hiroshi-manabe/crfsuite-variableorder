@@ -1,0 +1,16 @@
+Debug/*
+Release/*
+*.o
+*.a
+*.obj
+*.lib
+*.exe
+*.dll
+BuildLog.htm
+*.idb
+*.pdb
+*.user
+*.lo
+Makefile
+*.ncb
+*.suo
