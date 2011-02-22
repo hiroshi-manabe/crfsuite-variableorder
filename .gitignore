@@ -23,4 +23,5 @@ Makefile
 *.manifest
 *.dep
 *.res
+*.bak
 test.pl

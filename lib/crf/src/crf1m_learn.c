@@ -762,12 +762,10 @@ void crf1ml_shuffle(int *perm, int N, int init)
 
 crf1ml_t* crf1ml_new()
 {
-#if 0
-    crf1mc_test_context(stdout);
-    return NULL;
-#else
     crf1ml_t* trainer = (crf1ml_t*)calloc(1, sizeof(crf1ml_t));
     trainer->lg = (logging_t*)calloc(1, sizeof(logging_t));
+	trainer->exp_weight = 0;
+	trainer->preprocessor_data = 0;
 
     /* Create an instance for CRF parameters. */
     trainer->params = params_create_instance();
@@ -775,7 +773,6 @@ crf1ml_t* crf1ml_new()
     crf1ml_exchange_options(trainer->params, &trainer->opt, 0);
 
     return trainer;
-#endif
 }
 
 void crf1ml_delete(crf1ml_t* trainer)
@@ -783,6 +780,7 @@ void crf1ml_delete(crf1ml_t* trainer)
     if (trainer != NULL) {
         free(trainer->lg);
 		free(trainer->exp_weight);
+		free(trainer->preprocessor_data);
     }
 }
 

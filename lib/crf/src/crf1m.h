@@ -282,6 +282,8 @@ struct tag_crf1ml {
     clock_t clk_prev;
 
     void *solver_data;
+
+	void *preprocessor_data;
 };
 typedef struct tag_crf1ml crf1ml_t;
 
