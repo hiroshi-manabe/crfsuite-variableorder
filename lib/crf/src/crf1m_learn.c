@@ -82,52 +82,59 @@ public:
 	}
 };
 
-template<class T> class BufferManager
+typedef struct
 {
-	T* buffer_;
+	void* buffer_;
+	int unit_size_;
 	int buffer_max_;
 	int buffer_size_;
-public:
-	BufferManager(int initial_buffer_max = 65536) {
-		buffer_max_ = initial_buffer_max;
-		buffer_ = (T*)malloc(sizeof(T) * initial_buffer_max);
-		memset(buffer_, 0, sizeof(T) * initial_buffer_max);
-		buffer_size_ = 0;
-	}
+}  buffer_manager_t;
 
-	inline T* from_index(int index) { return buffer_ + index; }
+void buf_init(buffer_manager_t* manager, int unit_size, int initial_buffer_max)
+{
+	manager->unit_size_ = unit_size;
+	manager->buffer_max_ = initial_buffer_max;
+	manager->buffer_ = malloc(unit_size * initial_buffer_max);
+	memset(manager->buffer_, 0, unit_size * initial_buffer_max);
+	manager->buffer_size_ = 0;
+}
 
-	int get_new_index(int size = 1)
-	{
-		while (buffer_max_ < buffer_size_ + size) {
-			T* temp = (T*)realloc(buffer_, buffer_max_ * 2 * sizeof(T));
-			if (!temp) throw;
-			buffer_ = temp;
-			buffer_max_ *= 2;
-			memset(buffer_ + buffer_size_, 0,
-				(buffer_max_ - buffer_size_) * sizeof(T));
-		}
-		int ret = buffer_size_;
-		buffer_size_ += size;
-		return ret;
-	}
+void* buf_from_index(buffer_manager_t* manager, int index)
+{
+	return (char*)manager->buffer_ + manager->unit_size_ * index;
+}
 
-	int get_current_index()
-	{
-		return buffer_size_;
+int buf_get_new_index(buffer_manager_t* manager, int count)
+{
+	int ret;
+	while (manager->buffer_max_ < manager->buffer_size_ + count) {
+		void* temp = realloc(manager->buffer_, manager->buffer_max_ * 2 * manager->unit_size_);
+		if (!temp) return -1;
+		manager->buffer_ = temp;
+		manager->buffer_max_ *= 2;
+		memset((char*)manager->buffer_ + manager->unit_size_ * manager->buffer_size_, 0,
+			manager->unit_size_ * (manager->buffer_max_ - manager->buffer_size_));
 	}
+	ret = manager->buffer_size_;
+	manager->buffer_size_ += count;
+	return ret;
+}
 
-	void clear()
-	{
-		memset(buffer_, 0, sizeof(T) * buffer_size_);
-		buffer_size_ = 0;
-	}
+int buf_get_current_index(buffer_manager_t* manager)
+{
+	return manager->buffer_size_;
+}
 
-	virtual ~BufferManager()
-	{
-		free(buffer_);
-	}
-};
+void buf_clear(buffer_manager_t* manager)
+{
+	memset(manager->buffer_, 0, manager->unit_size_ * manager->buffer_size_);
+	manager->buffer_size_ = 0;
+}
+
+void buf_free(buffer_manager_t* manager)
+{
+	free(manager->buffer_);
+}
 
 #ifdef __cplusplus
 extern "C" {
