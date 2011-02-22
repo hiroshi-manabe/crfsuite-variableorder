@@ -1,5 +1,11 @@
 Debug/*
 Release/*
+frontend/Debug/*
+frontend/Release/*
+lib/crf/Debug/*
+lib/crf/Release/*
+lib/cqdb/Debug/*
+lib/cqdb/Release/*
 *.o
 *.a
 *.obj
@@ -14,3 +20,7 @@ BuildLog.htm
 Makefile
 *.ncb
 *.suo
+*.manifest
+*.dep
+*.res
+test.pl

@@ -175,18 +175,10 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\crf1m_context.cpp"
+				RelativePath=".\src\crf1m_context.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -195,18 +187,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\crf1m_feature.cpp"
+				RelativePath=".\src\crf1m_feature.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -215,18 +199,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\crf1m_learn.cpp"
+				RelativePath=".\src\crf1m_learn.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
