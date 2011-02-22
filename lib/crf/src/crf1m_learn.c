@@ -322,8 +322,6 @@ void crf1ml_set_context(crf1ml_t* trainer, const crf_sequence_t* seq)
     }
 }
 
-#define OEXP    1
-
 void crf1ml_compile_sequence(crf1ml_t* trainer, crf_sequence_t* seq)
 {
     int a, i, t, r, fid;

@@ -181,7 +181,7 @@ typedef struct tag_crf1mmw crf1mmw_t;
 typedef struct {
     int        order;
     int        attr;
-    char       label_sequence[MAX_ORDER];
+    uint8_t    label_sequence[MAX_ORDER];
     floatval_t    weight;
 } crf1mm_feature_t;
 
@@ -298,6 +298,8 @@ typedef void (*update_feature_t)(
 void crf1ml_compile(crf1ml_t* trainer);
 void crf1ml_enum_features(crf1ml_t* trainer, const crf_sequence_t* seq, update_feature_t func, double* logp);
 void crf1ml_shuffle(int *perm, int N, int init);
+void crf1ml_set_context(crf1ml_t* trainer, const crf_sequence_t* seq);
+void crf1ml_compile_sequence(crf1ml_t* trainer, crf_sequence_t* seq);
 
 /* crf1m_learn_lbfgs.c */
 int crf1ml_lbfgs(crf1ml_t* crf1mt, crf1ml_option_t *opt);

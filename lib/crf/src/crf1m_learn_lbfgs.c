@@ -87,11 +87,8 @@ static lbfgsfloatval_t lbfgs_evaluate(
     crf1ml_t* crf1mt = (crf1ml_t*)instance;
     crf_sequence_t* seqs = crf1mt->seqs;
     const int N = crf1mt->num_sequences;
-#ifdef TEST
-	int scores[] = { 1, 2, 3, 4, 10, 5, 7, 12, 9, 11, 13, 14, 15, 6, 8,
-		16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29};
-#endif
-    lbfgs_internal_t *lbfgsi = LBFGS_INTERNAL(crf1mt);
+
+	lbfgs_internal_t *lbfgsi = LBFGS_INTERNAL(crf1mt);
 
 	if (!crf1mt->exp_weight) {
 		crf1mt->exp_weight = (floatval_t*)calloc(crf1mt->num_features, sizeof(floatval_t));
@@ -100,11 +97,6 @@ static lbfgsfloatval_t lbfgs_evaluate(
 	for (i = 0; i < crf1mt->num_features; ++i) {
 		crf1mt->exp_weight[i] = exp(x[i]);
 	}
-#ifdef TEST
-//	for (i = 0; i < sizeof(scores) / sizeof(scores[0]); ++i) {
-//		crf1mt->exp_weight[i] = scores[i] / 10.0;
-//	}
-#endif
 
     /* Set the gradient vector. */
     lbfgsi->g = g;
@@ -117,11 +109,6 @@ static lbfgsfloatval_t lbfgs_evaluate(
         crf1ml_feature_t* f = &crf1mt->features[i];
         g[i] = -f->freq;
     }
-
-    /*
-        Set the scores (weights) of transition features here because
-        these are independent of input label sequences.
-     */
 
     /*
         Compute model expectations.

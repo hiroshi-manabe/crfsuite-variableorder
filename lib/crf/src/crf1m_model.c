@@ -694,7 +694,7 @@ int crf1mmw_put_feature(crf1mmw_t* writer, int fid, const crf1mm_feature_t* f)
 
     write_uint32(fp, f->order);
     write_uint32(fp, f->attr);
-	write_uint8_array(fp, f->label_sequence, MAX_ORDER);
+	write_uint8_array(fp, (uint8_t*)f->label_sequence, MAX_ORDER);
     write_float(fp, f->weight);
     ++hfeat->num;
     return 0;
