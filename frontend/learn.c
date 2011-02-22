@@ -178,10 +178,6 @@ static int evaluate_callback(void *instance, crf_tagger_t* tagger)
     return 0;
 }
 
-// for debug only
-crf_dictionary_t* dic_attrs_global; 
-crf_dictionary_t* dic_labels_global;
-
 int main_learn(int argc, char *argv[], const char *argv0)
 {
     int i, ret = 0, arg_used = 0;
@@ -320,10 +316,6 @@ int main_learn(int argc, char *argv[], const char *argv0)
     crf_data_set_num_labels(&data_train, labels->num(labels));
     data_train.num_attrs = attrs->num(attrs);
     data_train.max_item_length = crf_data_maxlength(&data_train);
-
-	// for debug only
-	dic_labels_global = labels;
-	dic_attrs_global = attrs;
 
     /* Initialize an evaluation object. */
     crf_evaluation_finish(&eval);

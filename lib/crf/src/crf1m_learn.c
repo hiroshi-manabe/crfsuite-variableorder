@@ -679,14 +679,9 @@ void crf1ml_preprocess(
 	logging_progress_end(trainer->lg);
 }
 
-// for debug only
-extern crf_dictionary_t* dic_attrs_global; 
-extern crf_dictionary_t* dic_labels_global;
-
-int crf1ml_assert_feature_freqs(
+int crf1ml_set_feature_freqs(
 	crf1ml_t* trainer,
-	crf1ml_features_t* features,
-	int update
+	crf1ml_features_t* features
 	)
 {
 	int i, t, n, ret;
@@ -716,26 +711,7 @@ int crf1ml_assert_feature_freqs(
 	ret = 1;
 	for (i = 0; i < trainer->num_features; ++i) {
 		if (trainer->features[i].freq != feature_freqs[i]) {
-			if (update) {
-				trainer->features[i].freq = feature_freqs[i];
-			} else {
-				const char* str_attr;
-				char buf[1024];
-				dic_attrs_global->to_string(dic_attrs_global, trainer->features[i].attr, &str_attr);
-				strcpy(buf, str_attr);
-				strcat(buf, " :");
-				for (n = 0; n < trainer->features[i].order; ++n) {
-					const char* str_label;
-					if (trainer->features[i].label_sequence[n] == trainer->num_labels) {
-						str_label = "__EOS__";
-					} else {
-						dic_labels_global->to_string(dic_labels_global, trainer->features[i].label_sequence[n], &str_label);
-					}
-					strcat(buf, " ");
-					strcat(buf, str_label);
-				}
-				ret = 0;
-			}
+			trainer->features[i].freq = feature_freqs[i];
 		}
 	}
 	free(feature_freqs);
@@ -929,7 +905,7 @@ static int crf_train_train(
 
 	// preprocess
 	crf1ml_preprocess(crf1mt);
-	crf1ml_assert_feature_freqs(crf1mt, features, 1);
+	crf1ml_set_feature_freqs(crf1mt, features);
 
 	crf1mc_set_num_items(crf1mt->ctx, max_item_length, crf1mt->max_paths);
 
