@@ -131,7 +131,7 @@ void buf_clear(buffer_manager_t* manager)
 	manager->buffer_size_ = 0;
 }
 
-void buf_free(buffer_manager_t* manager)
+void buf_delete(buffer_manager_t* manager)
 {
 	free(manager->buffer_);
 }
@@ -376,6 +376,22 @@ void crf1ml_set_context(crf1ml_t* trainer, const crf_sequence_t* seq)
     }
 }
 
+typedef struct {
+	buffer_manager_t* path_manager_;
+	buffer_manager_t* feature_id_list_manager_;
+	buffer_manager_t* node_manager_;
+} crfvo_preprocessor_t;
+
+void crfvo_preprocessor_init(crfvo_preprocessor_t* preprocessor)
+{
+	preprocessor->path_manager_ = (buffer_manager_t*)malloc(sizeof(buffer_manager_t));
+}
+
+void crfvo_preprocessor_delete(crfvo_preprocessor_t* preprocessor)
+{
+	buf_delete(preprocessor->path_manager_);
+}
+
 void crf1ml_preprocess_sequence(crf1ml_t* trainer, crf_sequence_t* seq)
 {
     int a, i, t, r, fid;
@@ -397,6 +413,11 @@ void crf1ml_preprocess_sequence(crf1ml_t* trainer, crf_sequence_t* seq)
 #define TRIE_VECTOR(i) (trie_vector[i+1])
 #define ID_VECTOR_VECTOR(i) (id_vector_vector[i+1])
 #define FEATURE_COUNTS(i) (feature_counts[i+1])
+
+	if (!trainer->preprocessor_data) {
+		trainer->preprocessor_data = malloc(sizeof(crfvo_preprocessor_t));
+		trainer->preprocessor_data_delete_func = (void (*)(void*))crfvo_preprocessor_delete;
+	}
 
 	for (t = -1; t < T; ++t) { // -1: BOS
 		bool created;
@@ -780,6 +801,9 @@ void crf1ml_delete(crf1ml_t* trainer)
     if (trainer != NULL) {
         free(trainer->lg);
 		free(trainer->exp_weight);
+		if (trainer->preprocessor_data_delete_func) {
+			trainer->preprocessor_data_delete_func(trainer->preprocessor_data);
+		}
 		free(trainer->preprocessor_data);
     }
 }

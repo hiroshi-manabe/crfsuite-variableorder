@@ -284,6 +284,7 @@ struct tag_crf1ml {
     void *solver_data;
 
 	void *preprocessor_data;
+	void (*preprocessor_data_delete_func)(void*);
 };
 typedef struct tag_crf1ml crf1ml_t;
 
