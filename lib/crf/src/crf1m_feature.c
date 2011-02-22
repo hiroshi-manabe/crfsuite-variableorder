@@ -30,8 +30,6 @@
 
 /* $Id: crf1m_feature.c 176 2010-07-14 09:31:04Z naoaki $ */
 
-#include <vector>
-using namespace std;
 
 #ifdef __cplusplus
 extern "C" {
@@ -163,7 +161,7 @@ crf1ml_features_t* crf1ml_generate_features(
     void *instance
     )
 {
-    int i, j, s, t, c;
+    int i, s, t;
     crf1ml_feature_t f;
     featureset_t* set = NULL;
     crf1ml_features_t *features = NULL;
