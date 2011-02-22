@@ -287,8 +287,10 @@ void crf1mc_set_weight(
     const floatval_t* exp_weight
 	)
 {
+	int i, j, t;
 	int T = ctx->num_items;
-	for (int t = 0; t < T; ++t) {
+
+	for (t = 0; t < T; ++t) {
 		crf1m_path_score_t* path_scores = ctx->path_scores[t];
 		int* fids_ref = ctx->fids_refs[t];
 		int n = ctx->num_paths[t];
@@ -296,11 +298,12 @@ void crf1mc_set_weight(
 
 		// accumulate weight
 		path_scores[0].exp_weight = 1.0;
-		for (int i = 1; i < n; ++i) {
-			path_scores[i].exp_weight = 1.0;
+		for (i = 1; i < n; ++i) {
 			int feature_count = path_scores[i].path.feature_count;
 			int longest_suffix_index = path_scores[i].path.longest_suffix_index;
-			for (int j = 0; j < feature_count; ++j) {
+			path_scores[i].exp_weight = 1.0;
+
+			for (j = 0; j < feature_count; ++j) {
 				path_scores[i].exp_weight *= exp_weight[fids_ref[fid_index++]];
 			}
 			path_scores[i].exp_weight *= path_scores[longest_suffix_index].exp_weight;
