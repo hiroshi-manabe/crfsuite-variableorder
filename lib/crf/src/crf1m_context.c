@@ -168,44 +168,50 @@ floatval_t crf1mc_viterbi(crf1m_context_t* ctx)
 	int L = ctx->num_labels;
 	floatval_t* prev_temp_scores = ctx->prev_temp_scores;
 	floatval_t* cur_temp_scores = ctx->cur_temp_scores;
-
-	prev_temp_scores[0] = 1.0; // gamma for empty path
-	prev_temp_scores[1] = 1.0; // gamma for BOS
+	floatval_t* prev_temp_scores_backup = (floatval_t*)malloc(sizeof(floatval_t) * ctx->max_paths);
+	int* real_path_indexes = (int*)malloc(sizeof(int) * ctx->max_paths);
 
 	int exponent_diff = 0;
 	int exponent_all = 0;
 	floatval_t real_scale_diff = 1.0;
 
+	int n = 2, prev_n, i, j, t;
+
+	floatval_t last_best_score = 0.0;
+	int last_best_path = 0;
+
 	prev_temp_scores[0] = 0.0;
 	prev_temp_scores[1] = 1.0;
-	int n = 2, prev_n;
-	floatval_t* prev_temp_scores_backup = (floatval_t*)malloc(sizeof(floatval_t) * ctx->max_paths);
-	int* real_path_indexes = (int*)malloc(sizeof(int) * ctx->max_paths);
 
-	for (int t = 0; t < T; ++t) {
+	for (t = 0; t < T; ++t) {
+		int label, next_label, prev_index_start;
+		floatval_t max_score;
+
 		crf1m_path_score_t* path_scores = ctx->path_scores[t];
 		prev_n = n;
 		n = ctx->num_paths[t];
 		memset(cur_temp_scores, 0, sizeof(floatval_t) * n);
 		memcpy(prev_temp_scores_backup, prev_temp_scores, sizeof(floatval_t) * prev_n);
-		for (int i = 0; i < prev_n; ++i) real_path_indexes[i] = i;
+		for (i = 0; i < prev_n; ++i) real_path_indexes[i] = i;
 
-		int label = L;
-		int next_label = ctx->num_paths[t] - ctx->num_paths_by_label[t][L];
-		int prev_index_start = prev_n;
-		floatval_t max_score = 0;
+		label = L;
+		next_label = ctx->num_paths[t] - ctx->num_paths_by_label[t][L];
+		prev_index_start = prev_n;
+		max_score = 0.0;
 
-		for (int i = n-1; i > 0; --i) {
+		for (i = n-1; i > 0; --i) {
+			int prev_path_index;
+
 			while (i < next_label && label >= 0) {
 				label--;
 				next_label -= ctx->num_paths_by_label[t][label];
 				memcpy(prev_temp_scores, prev_temp_scores_backup, sizeof(floatval_t) * prev_n);
-				for (int i = 0; i < prev_n; ++i) real_path_indexes[i] = i;
+				for (j = 0; j < prev_n; ++j) real_path_indexes[j] = j;
 				prev_index_start = prev_n;
 			}
 			if (label < 0) break;
-			int prev_path_index = path_scores[i].path.prev_path_index;
-			for (int j = prev_index_start-1; j > prev_path_index; --j) {
+			prev_path_index = path_scores[i].path.prev_path_index;
+			for (j = prev_index_start-1; j > prev_path_index; --j) {
 				int longest_suffix_index = (t > 0) ? ctx->path_scores[t-1][j].path.longest_suffix_index : 0;
 				if (prev_temp_scores[j] > prev_temp_scores[longest_suffix_index]) {
 					prev_temp_scores[longest_suffix_index] = prev_temp_scores[j];
@@ -220,23 +226,21 @@ floatval_t crf1mc_viterbi(crf1m_context_t* ctx)
 		frexp(max_score, &exponent_diff);
 		exponent_all += exponent_diff;
 		real_scale_diff = ldexp(1.0, -exponent_diff);
-		for (int i = 1; i < n; ++i) {
+		for (i = 1; i < n; ++i) {
 			cur_temp_scores[i] *= real_scale_diff;
 			path_scores[i].score = log(cur_temp_scores[i] * pow(2.0, exponent_all));
 		}
 		memcpy(prev_temp_scores, cur_temp_scores, sizeof(floatval_t) * n);
 	}
 
-	floatval_t last_best_score = 0.0;
-	int last_best_path = 0;
-	for (int i = 1; i < n; ++i) {
+	for (i = 1; i < n; ++i) {
 		if (prev_temp_scores[i] > last_best_score) {
 			last_best_score = prev_temp_scores[i];
 			last_best_path = i;
 		}
 	}
 
-	for (int t = T-1; t >= 0; --t) {
+	for (t = T-1; t >= 0; --t) {
 		int label = 0;
 		int path_num = 1 + ctx->num_paths_by_label[t][0];
 		while (last_best_path >= path_num) {
