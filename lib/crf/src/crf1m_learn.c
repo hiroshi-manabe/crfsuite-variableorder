@@ -82,6 +82,53 @@ public:
 	}
 };
 
+template<class T> class BufferManager
+{
+	T* buffer_;
+	int buffer_max_;
+	int buffer_size_;
+public:
+	BufferManager(int initial_buffer_max = 65536) {
+		buffer_max_ = initial_buffer_max;
+		buffer_ = (T*)malloc(sizeof(T) * initial_buffer_max);
+		memset(buffer_, 0, sizeof(T) * initial_buffer_max);
+		buffer_size_ = 0;
+	}
+
+	inline T* from_index(int index) { return buffer_ + index; }
+
+	int get_new_index(int size = 1)
+	{
+		while (buffer_max_ < buffer_size_ + size) {
+			T* temp = (T*)realloc(buffer_, buffer_max_ * 2 * sizeof(T));
+			if (!temp) throw;
+			buffer_ = temp;
+			buffer_max_ *= 2;
+			memset(buffer_ + buffer_size_, 0,
+				(buffer_max_ - buffer_size_) * sizeof(T));
+		}
+		int ret = buffer_size_;
+		buffer_size_ += size;
+		return ret;
+	}
+
+	int get_current_index()
+	{
+		return buffer_size_;
+	}
+
+	void clear()
+	{
+		memset(buffer_, 0, sizeof(T) * buffer_size_);
+		buffer_size_ = 0;
+	}
+
+	virtual ~BufferManager()
+	{
+		free(buffer_);
+	}
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
