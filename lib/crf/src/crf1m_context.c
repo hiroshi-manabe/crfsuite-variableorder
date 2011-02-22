@@ -315,19 +315,21 @@ void crf1mc_accumulate_discount(
     crf1m_context_t* ctx
     )
 {
+	int i, last_n, t;
 	int T = ctx->num_items;
 	floatval_t* prev_temp_scores = ctx->prev_temp_scores;
 	floatval_t* cur_temp_scores = ctx->cur_temp_scores;
 
+	int exponent_diff = 0;
+	floatval_t real_scale_diff = 1.0;
+
 	prev_temp_scores[0] = 1.0; // gamma for empty path
 	prev_temp_scores[1] = 1.0; // gamma for BOS
 
-	int exponent_diff = 0;
-	floatval_t real_scale_diff = 1.0;
 	ctx->exponents[0] = 0;
 
 	// forward
-	for (int t = 0; t < T; ++t) {
+	for (t = 0; t < T; ++t) {
 		crf1m_path_score_t* path_scores = ctx->path_scores[t];
 		int n = ctx->num_paths[t];
 
@@ -335,7 +337,7 @@ void crf1mc_accumulate_discount(
 
 		// forward scores
 		real_scale_diff = ldexp(1.0, -exponent_diff);
-		for (int i = n-1; i > 0; --i) {
+		for (i = n-1; i > 0; --i) {
 			int longest_suffix_index = path_scores[i].path.longest_suffix_index;
 			int prev_path_index = path_scores[i].path.prev_path_index;
 			floatval_t prev_gamma = prev_temp_scores[prev_path_index] * real_scale_diff;
@@ -357,10 +359,10 @@ void crf1mc_accumulate_discount(
 	ctx->norm_exponent = ctx->exponents[T-1] + exponent_diff;	
 
 	// backward / accumulate score
-	int last_n = ctx->num_paths[T-1];
+	last_n = ctx->num_paths[T-1];
 	memset(cur_temp_scores, 0, sizeof(floatval_t) * last_n);
 	cur_temp_scores[0] = real_scale_diff; // delta for the empty path
-	for (int t = T-1; t >= 0; --t) {
+	for (t = T-1; t >= 0; --t) {
 		crf1m_path_score_t* path_scores = ctx->path_scores[t];
 		int n = ctx->num_paths[t];
 		int prev_n = (t > 0) ? ctx->num_paths[t-1] : 2; // 2 paths (empty/BOS) for position 0
@@ -368,13 +370,13 @@ void crf1mc_accumulate_discount(
 
 		// backward scores
 		real_scale_diff = ldexp(1.0, (t > 0) ? (ctx->exponents[t-1] - ctx->exponents[t]) : 0);
-		for (int i = 1; i < n; ++i) {
+		for (i = 1; i < n; ++i) {
 			int longest_suffix_index = path_scores[i].path.longest_suffix_index;
 			// beta
 			cur_temp_scores[i] += cur_temp_scores[longest_suffix_index];
 		}
 		cur_temp_scores[0] = 0;
-		for (int i = 1; i < n; ++i) {
+		for (i = 1; i < n; ++i) {
 			int longest_suffix_index = path_scores[i].path.longest_suffix_index;
 			int prev_path_index = path_scores[i].path.prev_path_index;
 			// beta * W
@@ -389,12 +391,12 @@ void crf1mc_accumulate_discount(
 				 cur_temp_scores[longest_suffix_index]) * real_scale_diff;
 		}
 		path_scores[0].score = 0.0;
-		for (int i = n-1; i > 0; --i) {
+		for (i = n-1; i > 0; --i) {
 			int longest_suffix_index = path_scores[i].path.longest_suffix_index;
 			// sigma
 			path_scores[longest_suffix_index].score += path_scores[i].score;
 		}
-		for (int i = 1; i < n; ++i) {
+		for (i = 1; i < n; ++i) {
 			// normalize
 			path_scores[i].score /= ctx->norm_significand;
 		}
