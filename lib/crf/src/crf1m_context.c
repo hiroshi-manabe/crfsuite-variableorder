@@ -166,6 +166,7 @@ floatval_t crf1mc_viterbi(crf1m_context_t* ctx)
 {
 	int T = ctx->num_items;
 	int L = ctx->num_labels;
+
 	floatval_t* prev_temp_scores = ctx->prev_temp_scores;
 	floatval_t* cur_temp_scores = ctx->cur_temp_scores;
 	floatval_t* prev_temp_scores_backup = (floatval_t*)malloc(sizeof(floatval_t) * ctx->max_paths);
