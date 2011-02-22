@@ -46,7 +46,7 @@ typedef struct {
 	int    best_path;
 } crf1m_path_score_t;
 
-// compiled data
+// preprocessed data
 typedef struct {
 	int                num_paths;
 	crf_path_t*        paths;
@@ -54,7 +54,7 @@ typedef struct {
 	int                training_path_index;
 	int                num_fids;
 	int*               fids;
-} crf1m_compiled_data_t;
+} crf1m_preprocessed_data_t;
 
 /**
  * CRF context. 
@@ -295,11 +295,11 @@ typedef void (*update_feature_t)(
     int t
     );
 
-void crf1ml_compile(crf1ml_t* trainer);
+void crf1ml_preprocess(crf1ml_t* trainer);
 void crf1ml_enum_features(crf1ml_t* trainer, const crf_sequence_t* seq, update_feature_t func, double* logp);
 void crf1ml_shuffle(int *perm, int N, int init);
 void crf1ml_set_context(crf1ml_t* trainer, const crf_sequence_t* seq);
-void crf1ml_compile_sequence(crf1ml_t* trainer, crf_sequence_t* seq);
+void crf1ml_preprocess_sequence(crf1ml_t* trainer, crf_sequence_t* seq);
 
 /* crf1m_learn_lbfgs.c */
 int crf1ml_lbfgs(crf1ml_t* crf1mt, crf1ml_option_t *opt);

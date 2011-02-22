@@ -104,7 +104,7 @@ void crf_item_init_n(crf_item_t* item, int num_contents)
 void crf_item_finish(crf_item_t* item)
 {
     free(item->contents);
-	free(item->compiled_data);
+	free(item->preprocessed_data);
     crf_item_init(item);
 }
 

@@ -330,9 +330,9 @@ struct PrevIdAndFeatureIdList
 	}
 };
 
-crf1m_compiled_data_t* crf1mcp_new(int L, int num_paths, int num_fids)
+crf1m_preprocessed_data_t* crf1mcp_new(int L, int num_paths, int num_fids)
 {
-	crf1m_compiled_data_t* cp = (crf1m_compiled_data_t*)calloc(1, sizeof(crf1m_compiled_data_t));	
+	crf1m_preprocessed_data_t* cp = (crf1m_preprocessed_data_t*)calloc(1, sizeof(crf1m_preprocessed_data_t));	
 
 	cp->num_fids = num_fids;
 	cp->num_paths = num_paths;
@@ -342,7 +342,7 @@ crf1m_compiled_data_t* crf1mcp_new(int L, int num_paths, int num_fids)
 	return cp;
 }
 
-void crf1mcp_delete(crf1m_compiled_data_t* cp)
+void crf1mcp_delete(crf1m_preprocessed_data_t* cp)
 {
 	if (cp != NULL) {
 		free(cp->fids);
@@ -364,19 +364,19 @@ void crf1ml_set_context(crf1ml_t* trainer, const crf_sequence_t* seq)
     for (t = 0; t < T; ++t) {
         item = &seq->items[t];
         ctx->labels[t] = item->label;
-		crf1m_compiled_data_t* compiled_data = (crf1m_compiled_data_t*)item->compiled_data;
-		memset(ctx->path_scores[t], 0, sizeof(crf1m_path_score_t) * compiled_data->num_paths);
-		for (i = 0; i < compiled_data->num_paths; ++i) {
-			ctx->path_scores[t][i].path = compiled_data->paths[i];
+		crf1m_preprocessed_data_t* preprocessed_data = (crf1m_preprocessed_data_t*)item->preprocessed_data;
+		memset(ctx->path_scores[t], 0, sizeof(crf1m_path_score_t) * preprocessed_data->num_paths);
+		for (i = 0; i < preprocessed_data->num_paths; ++i) {
+			ctx->path_scores[t][i].path = preprocessed_data->paths[i];
 		}
-		ctx->num_paths[t] = compiled_data->num_paths;
-		ctx->num_paths_by_label[t] = compiled_data->num_paths_by_label;
-		ctx->fids_refs[t] = compiled_data->fids;
-		ctx->training_path_indexes[t] = compiled_data->training_path_index;
+		ctx->num_paths[t] = preprocessed_data->num_paths;
+		ctx->num_paths_by_label[t] = preprocessed_data->num_paths_by_label;
+		ctx->fids_refs[t] = preprocessed_data->fids;
+		ctx->training_path_indexes[t] = preprocessed_data->training_path_index;
     }
 }
 
-void crf1ml_compile_sequence(crf1ml_t* trainer, crf_sequence_t* seq)
+void crf1ml_preprocess_sequence(crf1ml_t* trainer, crf_sequence_t* seq)
 {
     int a, i, t, r, fid;
     const floatval_t *fwd = NULL, *bwd = NULL, *state = NULL, *edge = NULL;
@@ -503,18 +503,18 @@ void crf1ml_compile_sequence(crf1ml_t* trainer, crf_sequence_t* seq)
 			PATH(index)->feature_count = feature_count;
 		}
 		if (t >= 0) {
-			crf1m_compiled_data_t* compiled_data;
+			crf1m_preprocessed_data_t* preprocessed_data;
 	        item = &seq->items[t];
 
-			if (item->compiled_data_delete_func) item->compiled_data_delete_func(item->compiled_data);
-			item->compiled_data = (crf1m_compiled_data_t*)crf1mcp_new(L, path_count, FEATURE_COUNTS(t));
-			item->compiled_data_delete_func = (void (*)(void*))crf1mcp_delete;
-			compiled_data = (crf1m_compiled_data_t*)item->compiled_data;
+			if (item->preprocessed_data_delete_func) item->preprocessed_data_delete_func(item->preprocessed_data);
+			item->preprocessed_data = (crf1m_preprocessed_data_t*)crf1mcp_new(L, path_count, FEATURE_COUNTS(t));
+			item->preprocessed_data_delete_func = (void (*)(void*))crf1mcp_delete;
+			preprocessed_data = (crf1m_preprocessed_data_t*)item->preprocessed_data;
 
-			memcpy(compiled_data->fids, feature_ids, FEATURE_COUNTS(t) * sizeof(int));
-			memcpy(compiled_data->paths, Path::manager.from_index(0), path_count * sizeof(crf_path_t));
-			compiled_data->training_path_index = cur_path_id_to_index[TRIE_VECTOR(t).get_longest_match_path_id(train_label_vector)];
-			memcpy(compiled_data->num_paths_by_label, num_paths_by_label, sizeof(int) * (L+1));
+			memcpy(preprocessed_data->fids, feature_ids, FEATURE_COUNTS(t) * sizeof(int));
+			memcpy(preprocessed_data->paths, Path::manager.from_index(0), path_count * sizeof(crf_path_t));
+			preprocessed_data->training_path_index = cur_path_id_to_index[TRIE_VECTOR(t).get_longest_match_path_id(train_label_vector)];
+			memcpy(preprocessed_data->num_paths_by_label, num_paths_by_label, sizeof(int) * (L+1));
 			t = t + 0;
 		}
 	}
@@ -662,7 +662,7 @@ error_exit:
     return 0;
 }
 
-void crf1ml_compile(
+void crf1ml_preprocess(
     crf1ml_t* trainer
 	)
 {
@@ -670,7 +670,7 @@ void crf1ml_compile(
 	logging(trainer->lg, "Compiling...\n");
 	logging_progress_start(trainer->lg);
 	for (i = 0; i < trainer->num_sequences; ++i) {
-		crf1ml_compile_sequence(trainer, &trainer->seqs[i]);
+		crf1ml_preprocess_sequence(trainer, &trainer->seqs[i]);
 		if (trainer->max_paths < trainer->seqs[i].max_paths) {
 			trainer->max_paths = trainer->seqs[i].max_paths;
 		}
@@ -697,19 +697,19 @@ int crf1ml_assert_feature_freqs(
 		crf_sequence_t* seq = &trainer->seqs[i];
 		for (t = 0; t < seq->num_items; ++t) {
 			crf_item_t* item = &seq->items[t];
-			crf1m_compiled_data_t* compiled_data = (crf1m_compiled_data_t*)item->compiled_data;
+			crf1m_preprocessed_data_t* preprocessed_data = (crf1m_preprocessed_data_t*)item->preprocessed_data;
 			int feature_last_index = 0;
-			for (n = 0; n < compiled_data->num_paths; ++n) {
-				feature_last_index += compiled_data->paths[n].feature_count;
+			for (n = 0; n < preprocessed_data->num_paths; ++n) {
+				feature_last_index += preprocessed_data->paths[n].feature_count;
 				feature_last_indexes[n] = feature_last_index;
 			}
-			n = compiled_data->training_path_index;
+			n = preprocessed_data->training_path_index;
 			while (n > 0) {
 				int j;
 				for (j = feature_last_indexes[n-1]; j < feature_last_indexes[n]; ++j) {
-					feature_freqs[compiled_data->fids[j]]++;
+					feature_freqs[preprocessed_data->fids[j]]++;
 				}
-				n = compiled_data->paths[n].longest_suffix_index;
+				n = preprocessed_data->paths[n].longest_suffix_index;
 			}
 		}
 	}
@@ -821,8 +821,8 @@ int crf_train_tag(crf_tagger_t* tagger, crf_sequence_t *inst, crf_output_t* outp
 	int max_path = 0;
 
 	for (i = 0; i < inst->num_items; ++i) {
-		if (inst->items[i].compiled_data == 0) {
-			crf1ml_compile_sequence((crf1ml_t*)tagger->internal, inst);
+		if (inst->items[i].preprocessed_data == 0) {
+			crf1ml_preprocess_sequence((crf1ml_t*)tagger->internal, inst);
 			break;
 		}
 	}
@@ -927,12 +927,9 @@ static int crf_train_train(
     crf1mt->num_sequences = num_instances;
     crf1mt->seqs = seqs;
 
-	// compile
-	crf1ml_compile(crf1mt);
+	// preprocess
+	crf1ml_preprocess(crf1mt);
 	crf1ml_assert_feature_freqs(crf1mt, features, 1);
-//	if (!crf1ml_assert_feature_freqs(crf1mt, features)) {
-//		return CRFERR_INCORRECT_FEATURE_FREQS;
-//	}
 
 	crf1mc_set_num_items(crf1mt->ctx, max_item_length, crf1mt->max_paths);
 

@@ -92,8 +92,8 @@ typedef struct {
     int                max_contents;    /**< Maximum number of contents. */
     crf_content_t*     contents;        /**< Array of the contents. */
     int                label;           /**< Output label. */
-	void*              compiled_data;
-	void               (*compiled_data_delete_func)(void*);
+	void*              preprocessed_data;
+	void               (*preprocessed_data_delete_func)(void*);
 } crf_item_t;
 
 /**
@@ -103,7 +103,7 @@ typedef struct {
     int            num_items;    /**< Number of items in the sequence. */
     int            max_items;    /**< Maximum number of items (internal use). */
     crf_item_t*    items;        /**< Array of the items. */
-	int            max_paths;    // compiled data
+	int            max_paths;    /* preprocessed data */
 } crf_sequence_t;
 
 /**

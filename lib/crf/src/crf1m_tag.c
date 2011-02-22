@@ -79,8 +79,8 @@ int crf1mt_tag(crf1mt_t* crf1mt, crf_sequence_t *inst, crf_output_t* output)
     crf1m_context_t* ctx = crf1mt->ctx;
 
 	for (i = 0; i < inst->num_items; ++i) {
-		if (inst->items[i].compiled_data == 0) {
-			crf1ml_compile_sequence(crf1mt, inst);
+		if (inst->items[i].preprocessed_data == 0) {
+			crf1ml_preprocess_sequence(crf1mt, inst);
 			break;
 		}
 	}
