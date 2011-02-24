@@ -284,6 +284,7 @@ struct tag_crfvol {
     void *solver_data;
 
 	void *preprocessor_data;
+	void (*preprocessor_data_delete_func)(void*);
 };
 typedef struct tag_crfvol crfvol_t;
 
@@ -318,5 +319,16 @@ int crfvot_tag(crfvot_t* crfvot, crf_sequence_t *inst, crf_output_t* output);
 /* crfvo_preprocess.c */
 crfvo_preprocessed_data_t* crfvopd_new(int L, int num_paths, int num_fids);
 void crfvopd_delete(crfvo_preprocessed_data_t* pp);
+
+struct tag_buffer_manager;
+typedef struct tag_buffer_manager buffer_manager_t;
+struct tag_crfvopp {
+	buffer_manager_t* path_manager_;
+};
+
+typedef struct tag_crfvopp crfvopp_t;
+
+void crfvopp_new(crfvopp_t* pp);
+void crfvopp_delete(crfvopp_t* pp);
 
 #endif/*__CRF1M_H__*/

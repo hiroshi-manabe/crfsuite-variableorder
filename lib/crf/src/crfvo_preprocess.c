@@ -37,6 +37,8 @@
 #include <crfsuite.h>
 #include "crfvo.h"
 
+struct tag_buffer_manager;
+typedef struct tag_buffer_manager buffer_manager_t;
 
 crfvo_preprocessed_data_t* crfvopd_new(int L, int num_paths, int num_fids)
 {
@@ -60,13 +62,13 @@ void crfvopd_delete(crfvo_preprocessed_data_t* pd)
 	free(pd);
 }
 
-typedef struct
+struct tag_buffer_manager
 {
 	void* buffer_;
 	int unit_size_;
 	int buffer_max_;
 	int buffer_size_;
-}  buffer_manager_t;
+};
 
 void buf_init(buffer_manager_t* manager, int unit_size, int initial_buffer_max)
 {
@@ -109,8 +111,18 @@ void buf_clear(buffer_manager_t* manager)
 	manager->buffer_size_ = 0;
 }
 
-void buf_free(buffer_manager_t* manager)
+void buf_delete(buffer_manager_t* manager)
 {
 	free(manager->buffer_);
+}
+
+void crfvopp_new(crfvopp_t* pp)
+{
+	pp->path_manager_ = (buffer_manager_t*)malloc(sizeof(buffer_manager_t));
+}
+
+void crfvopp_delete(crfvopp_t* pp)
+{
+	buf_delete(pp->path_manager_);
 }
 

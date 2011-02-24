@@ -322,6 +322,11 @@ void crfvol_preprocess_sequence(crfvol_t* trainer, crf_sequence_t* seq)
 #define ID_VECTOR_VECTOR(i) (id_vector_vector[i+1])
 #define FEATURE_COUNTS(i) (feature_counts[i+1])
 
+	if (!trainer->preprocessor_data) {
+		trainer->preprocessor_data = malloc(sizeof(crfvopp_t));
+		trainer->preprocessor_data_delete_func = (void (*)(void*))crfvopp_delete;
+	}
+
 	for (t = -1; t < T; ++t) { // -1: BOS
 		bool created;
 
@@ -704,6 +709,9 @@ void crfvol_delete(crfvol_t* trainer)
     if (trainer != NULL) {
         free(trainer->lg);
 		free(trainer->exp_weight);
+		if (trainer->preprocessor_data_delete_func) {
+			trainer->preprocessor_data_delete_func(trainer->preprocessor_data);
+		}
 		free(trainer->preprocessor_data);
     }
 }
