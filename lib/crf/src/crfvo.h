@@ -40,7 +40,13 @@
 #define MAX_ORDER 8
 
 typedef struct {
-	crf_path_t path;
+	int    prev_path_index;
+	int    longest_suffix_index;
+	int    feature_count;
+} crfvo_path_t;
+
+typedef struct {
+	crfvo_path_t path;
 	floatval_t score;
 	floatval_t exp_weight;
 	int    best_path;
@@ -49,7 +55,7 @@ typedef struct {
 // preprocessed data
 typedef struct {
 	int                num_paths;
-	crf_path_t*        paths;
+	crfvo_path_t*        paths;
 	int*               num_paths_by_label;
 	int                training_path_index;
 	int                num_fids;

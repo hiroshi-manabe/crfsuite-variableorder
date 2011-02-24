@@ -82,12 +82,6 @@ typedef struct {
  * An item.
  */
 typedef struct {
-	int    prev_path_index;
-	int    longest_suffix_index;
-	int    feature_count;
-} crf_path_t;
-
-typedef struct {
     int                num_contents;    /**< Number of contents associated with the item. */
     int                max_contents;    /**< Maximum number of contents. */
     crf_content_t*     contents;        /**< Array of the contents. */

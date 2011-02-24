@@ -112,7 +112,7 @@ extern "C" {
 #define    ATTRIBUTE(trainer, a) \
     (&(trainer)->attributes[(a)])
 
-struct Path : crf_path_t
+struct Path : crfvo_path_t
 {
 	static BufferManager<Path> manager;
 };
@@ -170,11 +170,6 @@ public:
 		last_path_id = -1;
 	}
 
-	int create_children()
-	{
-		return TrieNode::manager.get_new_index(label_number);
-	}
-
 	int set_path(uint8_t* label_sequence, int label_sequence_len, bool& created)
 	{
 		int node_index = this->root_index;
@@ -201,7 +196,6 @@ public:
 	{
 		int cur_node_index = this->root_index;
 		int ret_node_index = cur_node_index;
-		if (NODE(cur_node_index)->get_path_id() != -1) ret_node_index = cur_node_index;
 
 		for (vector<uint8_t>::reverse_iterator it = label_sequence.rbegin(); it != label_sequence.rend(); it++) {
 			if (!NODE(cur_node_index)->has_children()) break;
@@ -216,7 +210,7 @@ public:
 	}
 
 	void enumerate_path(int* path_id_to_index, int* num_paths_by_label)
-	// path_id_to_pointer and path_index_to_id must have the size of maximum path_id
+	// path_id_to_index must have the size of maximum path_id
 	{
 		int prev_path_index = -1;
 		this->start_path_index = Path::manager.get_current_index();
@@ -441,7 +435,7 @@ void crfvol_preprocess_sequence(crfvol_t* trainer, crf_sequence_t* seq)
 			preprocessed_data = (crfvo_preprocessed_data_t*)item->preprocessed_data;
 
 			memcpy(preprocessed_data->fids, feature_ids, FEATURE_COUNTS(t) * sizeof(int));
-			memcpy(preprocessed_data->paths, Path::manager.from_index(0), path_count * sizeof(crf_path_t));
+			memcpy(preprocessed_data->paths, Path::manager.from_index(0), path_count * sizeof(crfvo_path_t));
 			preprocessed_data->training_path_index = cur_path_id_to_index[TRIE_VECTOR(t).get_longest_match_path_id(train_label_vector)];
 			memcpy(preprocessed_data->num_paths_by_label, num_paths_by_label, sizeof(int) * (L+1));
 			t = t + 0;
