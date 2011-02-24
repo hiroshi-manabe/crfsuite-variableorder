@@ -82,60 +82,6 @@ public:
 	}
 };
 
-typedef struct
-{
-	void* buffer_;
-	int unit_size_;
-	int buffer_max_;
-	int buffer_size_;
-}  buffer_manager_t;
-
-void buf_init(buffer_manager_t* manager, int unit_size, int initial_buffer_max)
-{
-	manager->unit_size_ = unit_size;
-	manager->buffer_max_ = initial_buffer_max;
-	manager->buffer_ = malloc(unit_size * initial_buffer_max);
-	memset(manager->buffer_, 0, unit_size * initial_buffer_max);
-	manager->buffer_size_ = 0;
-}
-
-void* buf_from_index(buffer_manager_t* manager, int index)
-{
-	return (char*)manager->buffer_ + manager->unit_size_ * index;
-}
-
-int buf_get_new_index(buffer_manager_t* manager, int count)
-{
-	int ret;
-	while (manager->buffer_max_ < manager->buffer_size_ + count) {
-		void* temp = realloc(manager->buffer_, manager->buffer_max_ * 2 * manager->unit_size_);
-		if (!temp) return -1;
-		manager->buffer_ = temp;
-		manager->buffer_max_ *= 2;
-		memset((char*)manager->buffer_ + manager->unit_size_ * manager->buffer_size_, 0,
-			manager->unit_size_ * (manager->buffer_max_ - manager->buffer_size_));
-	}
-	ret = manager->buffer_size_;
-	manager->buffer_size_ += count;
-	return ret;
-}
-
-int buf_get_current_index(buffer_manager_t* manager)
-{
-	return manager->buffer_size_;
-}
-
-void buf_clear(buffer_manager_t* manager)
-{
-	memset(manager->buffer_, 0, manager->unit_size_ * manager->buffer_size_);
-	manager->buffer_size_ = 0;
-}
-
-void buf_free(buffer_manager_t* manager)
-{
-	free(manager->buffer_);
-}
-
 #ifdef __cplusplus
 extern "C" {
 #endif
