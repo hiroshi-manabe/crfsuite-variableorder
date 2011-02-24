@@ -28,7 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: crf1m_tag.c 176 2010-07-14 09:31:04Z naoaki $ */
+/* $Id: crfvo_tag.c 176 2010-07-14 09:31:04Z naoaki $ */
 
 #ifdef    HAVE_CONFIG_H
 #include <config.h>
@@ -45,48 +45,48 @@
 
 #include "crfvo.h"
 
-struct tag_crf1mt {
+struct tag_crfvot {
     int num_labels;            /**< Number of distinct output labels (L). */
     int num_attributes;        /**< Number of distinct attributes (A). */
 
-    crf1mm_t *model;        /**< CRF model. */
-    crf1m_context_t *ctx;    /**< CRF context. */
+    crfvom_t *model;        /**< CRF model. */
+    crfvo_context_t *ctx;    /**< CRF context. */
 };
 
-crf1mt_t *crf1mt_new(crf1mm_t* crf1mm)
+crfvot_t *crfvot_new(crfvom_t* crfvom)
 {
-    crf1mt_t* crf1mt = NULL;
+    crfvot_t* crfvot = NULL;
 
-    crf1mt = (crf1mt_t*)calloc(1, sizeof(crf1mt_t));
-    crf1mt->num_labels = crf1mm_get_num_labels(crf1mm);
-    crf1mt->num_attributes = crf1mm_get_num_attrs(crf1mm);
-    crf1mt->model = crf1mm;
-    crf1mt->ctx = crf1mc_new(crf1mt->num_labels, 0, 0);
+    crfvot = (crfvot_t*)calloc(1, sizeof(crfvot_t));
+    crfvot->num_labels = crfvom_get_num_labels(crfvom);
+    crfvot->num_attributes = crfvom_get_num_attrs(crfvom);
+    crfvot->model = crfvom;
+    crfvot->ctx = crfvoc_new(crfvot->num_labels, 0, 0);
 
-    return crf1mt;
+    return crfvot;
 }
 
-void crf1mt_delete(crf1mt_t* crf1mt)
+void crfvot_delete(crfvot_t* crfvot)
 {
-    crf1mc_delete(crf1mt->ctx);
-    free(crf1mt);
+    crfvoc_delete(crfvot->ctx);
+    free(crfvot);
 }
 
-int crf1mt_tag(crf1mt_t* crf1mt, crf_sequence_t *inst, crf_output_t* output)
+int crfvot_tag(crfvot_t* crfvot, crf_sequence_t *inst, crf_output_t* output)
 {
     int i;
     floatval_t score = 0;
-    crf1m_context_t* ctx = crf1mt->ctx;
+    crfvo_context_t* ctx = crfvot->ctx;
 
 	for (i = 0; i < inst->num_items; ++i) {
 		if (inst->items[i].preprocessed_data == 0) {
-			crf1ml_preprocess_sequence(crf1mt, inst);
+			crfvol_preprocess_sequence(crfvot, inst);
 			break;
 		}
 	}
-    crf1mc_set_num_items(ctx, inst->num_items, inst->max_paths);
+    crfvoc_set_num_items(ctx, inst->num_items, inst->max_paths);
 
-    score = crf1mc_viterbi(ctx);
+    score = crfvoc_viterbi(ctx);
 
     crf_output_init_n(output, inst->num_items);
     output->probability = score;

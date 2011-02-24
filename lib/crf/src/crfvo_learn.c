@@ -28,7 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: crf1m_learn.c 176 2010-07-14 09:31:04Z naoaki $ */
+/* $Id: crfvo_learn.c 176 2010-07-14 09:31:04Z naoaki $ */
 
 #include <vector>
 #include <list>
@@ -330,9 +330,9 @@ struct PrevIdAndFeatureIdList
 	}
 };
 
-crf1m_preprocessed_data_t* crf1mcp_new(int L, int num_paths, int num_fids)
+crfvo_preprocessed_data_t* crfvocp_new(int L, int num_paths, int num_fids)
 {
-	crf1m_preprocessed_data_t* cp = (crf1m_preprocessed_data_t*)calloc(1, sizeof(crf1m_preprocessed_data_t));	
+	crfvo_preprocessed_data_t* cp = (crfvo_preprocessed_data_t*)calloc(1, sizeof(crfvo_preprocessed_data_t));	
 
 	cp->num_fids = num_fids;
 	cp->num_paths = num_paths;
@@ -342,7 +342,7 @@ crf1m_preprocessed_data_t* crf1mcp_new(int L, int num_paths, int num_fids)
 	return cp;
 }
 
-void crf1mcp_delete(crf1m_preprocessed_data_t* cp)
+void crfvocp_delete(crfvo_preprocessed_data_t* cp)
 {
 	if (cp != NULL) {
 		free(cp->fids);
@@ -352,10 +352,10 @@ void crf1mcp_delete(crf1m_preprocessed_data_t* cp)
 	free(cp);
 }
 
-void crf1ml_set_context(crf1ml_t* trainer, const crf_sequence_t* seq)
+void crfvol_set_context(crfvol_t* trainer, const crf_sequence_t* seq)
 {
     int i, t;
-    crf1m_context_t* ctx = trainer->ctx;
+    crfvo_context_t* ctx = trainer->ctx;
     const crf_item_t* item = NULL;
     const int T = seq->num_items;
 
@@ -364,8 +364,8 @@ void crf1ml_set_context(crf1ml_t* trainer, const crf_sequence_t* seq)
     for (t = 0; t < T; ++t) {
         item = &seq->items[t];
         ctx->labels[t] = item->label;
-		crf1m_preprocessed_data_t* preprocessed_data = (crf1m_preprocessed_data_t*)item->preprocessed_data;
-		memset(ctx->path_scores[t], 0, sizeof(crf1m_path_score_t) * preprocessed_data->num_paths);
+		crfvo_preprocessed_data_t* preprocessed_data = (crfvo_preprocessed_data_t*)item->preprocessed_data;
+		memset(ctx->path_scores[t], 0, sizeof(crfvo_path_score_t) * preprocessed_data->num_paths);
 		for (i = 0; i < preprocessed_data->num_paths; ++i) {
 			ctx->path_scores[t][i].path = preprocessed_data->paths[i];
 		}
@@ -376,11 +376,11 @@ void crf1ml_set_context(crf1ml_t* trainer, const crf_sequence_t* seq)
     }
 }
 
-void crf1ml_preprocess_sequence(crf1ml_t* trainer, crf_sequence_t* seq)
+void crfvol_preprocess_sequence(crfvol_t* trainer, crf_sequence_t* seq)
 {
     int a, i, t, r, fid;
     const floatval_t *fwd = NULL, *bwd = NULL, *state = NULL, *edge = NULL;
-    crf1ml_feature_t* f = NULL;
+    crfvol_feature_t* f = NULL;
     const feature_refs_t* attr = NULL;
     crf_item_t* item = NULL;
     const int T = seq->num_items;
@@ -503,13 +503,13 @@ void crf1ml_preprocess_sequence(crf1ml_t* trainer, crf_sequence_t* seq)
 			PATH(index)->feature_count = feature_count;
 		}
 		if (t >= 0) {
-			crf1m_preprocessed_data_t* preprocessed_data;
+			crfvo_preprocessed_data_t* preprocessed_data;
 	        item = &seq->items[t];
 
 			if (item->preprocessed_data_delete_func) item->preprocessed_data_delete_func(item->preprocessed_data);
-			item->preprocessed_data = (crf1m_preprocessed_data_t*)crf1mcp_new(L, path_count, FEATURE_COUNTS(t));
-			item->preprocessed_data_delete_func = (void (*)(void*))crf1mcp_delete;
-			preprocessed_data = (crf1m_preprocessed_data_t*)item->preprocessed_data;
+			item->preprocessed_data = (crfvo_preprocessed_data_t*)crfvocp_new(L, path_count, FEATURE_COUNTS(t));
+			item->preprocessed_data_delete_func = (void (*)(void*))crfvocp_delete;
+			preprocessed_data = (crfvo_preprocessed_data_t*)item->preprocessed_data;
 
 			memcpy(preprocessed_data->fids, feature_ids, FEATURE_COUNTS(t) * sizeof(int));
 			memcpy(preprocessed_data->paths, Path::manager.from_index(0), path_count * sizeof(crf_path_t));
@@ -525,14 +525,14 @@ void crf1ml_preprocess_sequence(crf1ml_t* trainer, crf_sequence_t* seq)
 	seq->max_paths = max_path_count;
 }
 
-void crf1ml_enum_features(crf1ml_t* trainer, const crf_sequence_t* seq, update_feature_t func, double* logp)
+void crfvol_enum_features(crfvol_t* trainer, const crf_sequence_t* seq, update_feature_t func, double* logp)
 {
-    crf1m_context_t* ctx = trainer->ctx;
+    crfvo_context_t* ctx = trainer->ctx;
     const int T = seq->num_items;
     const int L = trainer->num_labels;
 
 	for (int t = 0; t < T; ++t) {
-		crf1m_path_score_t* path_scores = ctx->path_scores[t];
+		crfvo_path_score_t* path_scores = ctx->path_scores[t];
 		int* fids = ctx->fids_refs[t];
 		int n = ctx->num_paths[t];
 		int fid_counter = 0;
@@ -542,19 +542,19 @@ void crf1ml_enum_features(crf1ml_t* trainer, const crf_sequence_t* seq, update_f
 				floatval_t prob = path_scores[i].score;
 				int fid = fids[fid_counter];
 				fid_counter++;
-				crf1ml_feature_t* f = FEATURE(trainer, fid);
+				crfvol_feature_t* f = FEATURE(trainer, fid);
 				func(f, fid, prob, 1.0, trainer, seq, t);				
 			}
 		}
 	}
 }
 
-static int init_feature_references(crf1ml_t* trainer, const int A, const int L)
+static int init_feature_references(crfvol_t* trainer, const int A, const int L)
 {
     int i, k;
     feature_refs_t *fl = NULL;
     const int K = trainer->num_features;
-    const crf1ml_feature_t* features = trainer->features;
+    const crfvol_feature_t* features = trainer->features;
 
     /*
         The purpose of this routine is to collect references (indices) of:
@@ -573,7 +573,7 @@ static int init_feature_references(crf1ml_t* trainer, const int A, const int L)
         We don't want to use realloc() to avoid memory fragmentation.
      */
     for (k = 0;k < K;++k) {
-        const crf1ml_feature_t *f = &features[k];
+        const crfvol_feature_t *f = &features[k];
         trainer->attributes[f->attr].num_features++;
     }
 
@@ -593,7 +593,7 @@ static int init_feature_references(crf1ml_t* trainer, const int A, const int L)
         At last, store the feature indices.
      */
     for (k = 0;k < K;++k) {
-        const crf1ml_feature_t *f = &features[k];
+        const crfvol_feature_t *f = &features[k];
         fl = &trainer->attributes[f->attr];
         fl->fids[fl->num_features++] = k;
     }
@@ -609,13 +609,13 @@ error_exit:
     return -1;
 }
 
-int crf1ml_prepare(
-    crf1ml_t* trainer,
+int crfvol_prepare(
+    crfvol_t* trainer,
     int num_labels,
     int num_attributes,
     int max_item_length,
 	int max_paths,
-    crf1ml_features_t* features
+    crfvol_features_t* features
     )
 {
     int ret = 0;
@@ -628,7 +628,7 @@ int crf1ml_prepare(
     trainer->num_attributes = A;
 
     /* Construct a CRF context. */
-    trainer->ctx = crf1mc_new(L, T, max_paths);
+    trainer->ctx = crfvoc_new(L, T, max_paths);
     if (trainer->ctx == NULL) {
         ret = CRFERR_OUTOFMEMORY;
         goto error_exit;
@@ -662,15 +662,15 @@ error_exit:
     return 0;
 }
 
-void crf1ml_preprocess(
-    crf1ml_t* trainer
+void crfvol_preprocess(
+    crfvol_t* trainer
 	)
 {
 	int i;
 	logging(trainer->lg, "Compiling...\n");
 	logging_progress_start(trainer->lg);
 	for (i = 0; i < trainer->num_sequences; ++i) {
-		crf1ml_preprocess_sequence(trainer, &trainer->seqs[i]);
+		crfvol_preprocess_sequence(trainer, &trainer->seqs[i]);
 		if (trainer->max_paths < trainer->seqs[i].max_paths) {
 			trainer->max_paths = trainer->seqs[i].max_paths;
 		}
@@ -679,9 +679,9 @@ void crf1ml_preprocess(
 	logging_progress_end(trainer->lg);
 }
 
-int crf1ml_set_feature_freqs(
-	crf1ml_t* trainer,
-	crf1ml_features_t* features
+int crfvol_set_feature_freqs(
+	crfvol_t* trainer,
+	crfvol_features_t* features
 	)
 {
 	int i, t, n, ret;
@@ -692,7 +692,7 @@ int crf1ml_set_feature_freqs(
 		crf_sequence_t* seq = &trainer->seqs[i];
 		for (t = 0; t < seq->num_items; ++t) {
 			crf_item_t* item = &seq->items[t];
-			crf1m_preprocessed_data_t* preprocessed_data = (crf1m_preprocessed_data_t*)item->preprocessed_data;
+			crfvo_preprocessed_data_t* preprocessed_data = (crfvo_preprocessed_data_t*)item->preprocessed_data;
 			int feature_last_index = 0;
 			for (n = 0; n < preprocessed_data->num_paths; ++n) {
 				feature_last_index += preprocessed_data->paths[n].feature_count;
@@ -719,7 +719,7 @@ int crf1ml_set_feature_freqs(
 	return ret;
 }
 
-static int crf1ml_exchange_options(crf_params_t* params, crf1ml_option_t* opt, int mode)
+static int crfvol_exchange_options(crf_params_t* params, crfvol_option_t* opt, int mode)
 {
     BEGIN_PARAM_MAP(params, mode)
         DDX_PARAM_STRING(
@@ -731,17 +731,17 @@ static int crf1ml_exchange_options(crf_params_t* params, crf1ml_option_t* opt, i
             "The minimum frequency of features."
             )
         DDX_PARAM_INT(
-            "feature.emulate_crf1m", opt->feature_emulate_crf1m, 0,
+            "feature.emulate_crfvo", opt->feature_emulate_crfvo, 0,
             "Emulate First-order CRF."
             )
     END_PARAM_MAP()
 
-    crf1ml_lbfgs_options(params, opt, mode);
+    crfvol_lbfgs_options(params, opt, mode);
 
     return 0;
 }
 
-void crf1ml_shuffle(int *perm, int N, int init)
+void crfvol_shuffle(int *perm, int N, int init)
 {
     int i, j, tmp;
 
@@ -760,9 +760,9 @@ void crf1ml_shuffle(int *perm, int N, int init)
     }
 }
 
-crf1ml_t* crf1ml_new()
+crfvol_t* crfvol_new()
 {
-    crf1ml_t* trainer = (crf1ml_t*)calloc(1, sizeof(crf1ml_t));
+    crfvol_t* trainer = (crfvol_t*)calloc(1, sizeof(crfvol_t));
     trainer->lg = (logging_t*)calloc(1, sizeof(logging_t));
 	trainer->exp_weight = 0;
 	trainer->preprocessor_data = 0;
@@ -770,12 +770,12 @@ crf1ml_t* crf1ml_new()
     /* Create an instance for CRF parameters. */
     trainer->params = params_create_instance();
     /* Set the default parameters. */
-    crf1ml_exchange_options(trainer->params, &trainer->opt, 0);
+    crfvol_exchange_options(trainer->params, &trainer->opt, 0);
 
     return trainer;
 }
 
-void crf1ml_delete(crf1ml_t* trainer)
+void crfvol_delete(crfvol_t* trainer)
 {
     if (trainer != NULL) {
         free(trainer->lg);
@@ -788,28 +788,28 @@ int crf_train_tag(crf_tagger_t* tagger, crf_sequence_t *inst, crf_output_t* outp
 {
     int i;
     floatval_t logscore = 0;
-    crf1ml_t *crf1mt = (crf1ml_t*)tagger->internal;
-    const floatval_t* exp_weight = crf1mt->exp_weight;
-    const int K = crf1mt->num_features;
-    crf1m_context_t* ctx = crf1mt->ctx;
+    crfvol_t *crfvot = (crfvol_t*)tagger->internal;
+    const floatval_t* exp_weight = crfvot->exp_weight;
+    const int K = crfvot->num_features;
+    crfvo_context_t* ctx = crfvot->ctx;
 	int max_path = 0;
 
 	for (i = 0; i < inst->num_items; ++i) {
 		if (inst->items[i].preprocessed_data == 0) {
-			crf1ml_preprocess_sequence((crf1ml_t*)tagger->internal, inst);
+			crfvol_preprocess_sequence((crfvol_t*)tagger->internal, inst);
 			break;
 		}
 	}
-    crf1mc_set_num_items(ctx, inst->num_items, inst->max_paths);
+    crfvoc_set_num_items(ctx, inst->num_items, inst->max_paths);
 
-    crf1ml_set_context(crf1mt, inst);
-	crf1mc_set_weight(ctx, exp_weight);
-    logscore = crf1mc_viterbi(crf1mt->ctx);
+    crfvol_set_context(crfvot, inst);
+	crfvoc_set_weight(ctx, exp_weight);
+    logscore = crfvoc_viterbi(crfvot->ctx);
 
     crf_output_init_n(output, inst->num_items);
     output->probability = logscore;
     for (i = 0;i < inst->num_items;++i) {
-        output->labels[i] = crf1mt->ctx->labels[i];
+        output->labels[i] = crfvot->ctx->labels[i];
     }
     output->num_labels = inst->num_items;
 
@@ -818,16 +818,16 @@ int crf_train_tag(crf_tagger_t* tagger, crf_sequence_t *inst, crf_output_t* outp
 
 void crf_train_set_message_callback(crf_trainer_t* trainer, void *instance, crf_logging_callback cbm)
 {
-    crf1ml_t *crf1mt = (crf1ml_t*)trainer->internal;
-    crf1mt->lg->func = cbm;
-    crf1mt->lg->instance = instance;
+    crfvol_t *crfvot = (crfvol_t*)trainer->internal;
+    crfvot->lg->func = cbm;
+    crfvot->lg->instance = instance;
 }
 
 void crf_train_set_evaluate_callback(crf_trainer_t* trainer, void *instance, crf_evaluate_callback cbe)
 {
-    crf1ml_t *crf1mt = (crf1ml_t*)trainer->internal;
-    crf1mt->cbe_instance = instance;
-    crf1mt->cbe_proc = cbe;
+    crfvol_t *crfvot = (crfvol_t*)trainer->internal;
+    crfvot->cbe_instance = instance;
+    crfvot->cbe_proc = cbe;
 }
 
 static int crf_train_train(
@@ -842,10 +842,10 @@ static int crf_train_train(
     int ret = 0;
     floatval_t sigma = 10, *best_w = NULL;
     crf_sequence_t* seqs = (crf_sequence_t*)instances;
-    crf1ml_features_t* features = NULL;
-    crf1ml_t *crf1mt = (crf1ml_t*)trainer->internal;
-    crf_params_t *params = crf1mt->params;
-    crf1ml_option_t *opt = &crf1mt->opt;
+    crfvol_features_t* features = NULL;
+    crfvol_t *crfvot = (crfvol_t*)trainer->internal;
+    crf_params_t *params = crfvot->params;
+    crfvol_option_t *opt = &crfvot->opt;
 
     /* Obtain the maximum number of items. */
     max_item_length = 0;
@@ -856,28 +856,28 @@ static int crf_train_train(
     }
 
     /* Access parameters. */
-    crf1ml_exchange_options(crf1mt->params, opt, -1);
+    crfvol_exchange_options(crfvot->params, opt, -1);
 
     /* Report the parameters. */
-    logging(crf1mt->lg, "Training first-order linear-chain CRFs (trainer.crf1m)\n");
-    logging(crf1mt->lg, "\n");
+    logging(crfvot->lg, "Training first-order linear-chain CRFs (trainer.crfvo)\n");
+    logging(crfvot->lg, "\n");
 
     /* Generate features. */
-    logging(crf1mt->lg, "Feature generation\n");
-    logging(crf1mt->lg, "feature.minfreq: %f\n", opt->feature_minfreq);
-    logging(crf1mt->lg, "feature.emulate_crf1m: %d\n", opt->feature_emulate_crf1m);
-    crf1mt->clk_begin = clock();
-    features = crf1ml_generate_features(
+    logging(crfvot->lg, "Feature generation\n");
+    logging(crfvot->lg, "feature.minfreq: %f\n", opt->feature_minfreq);
+    logging(crfvot->lg, "feature.emulate_crfvo: %d\n", opt->feature_emulate_crfvo);
+    crfvot->clk_begin = clock();
+    features = crfvol_generate_features(
         seqs,
         num_instances,
         num_labels,
         num_attributes,
-		opt->feature_emulate_crf1m, // emulate crf1m
+		opt->feature_emulate_crfvo, // emulate crfvo
         opt->feature_minfreq,
-        crf1mt->lg->func,
-        crf1mt->lg->instance
+        crfvot->lg->func,
+        crfvot->lg->instance
         );
-    logging(crf1mt->lg, "Number of features: %d\n", features->num_features);
+    logging(crfvot->lg, "Number of features: %d\n", features->num_features);
 	/*
 	for (i = 0; i < features->num_features; ++i) {
 		char buf[256] = {0};
@@ -888,30 +888,30 @@ static int crf_train_train(
 			strcat(buf, buf2);
 		}
 		strcat(buf, "\n");
-		logging(crf1mt->lg, buf);
+		logging(crfvot->lg, buf);
 	}
 	*/
-    logging(crf1mt->lg, "Seconds required: %.3f\n", (clock() - crf1mt->clk_begin) / (double)CLOCKS_PER_SEC);
-    logging(crf1mt->lg, "\n");
+    logging(crfvot->lg, "Seconds required: %.3f\n", (clock() - crfvot->clk_begin) / (double)CLOCKS_PER_SEC);
+    logging(crfvot->lg, "\n");
 
     /* Preparation for training. */
-	crf1ml_prepare(crf1mt, num_labels, num_attributes, max_item_length, 0, features);
-    crf1mt->num_attributes = num_attributes;
-    crf1mt->num_labels = num_labels;
-    crf1mt->num_sequences = num_instances;
-    crf1mt->seqs = seqs;
+	crfvol_prepare(crfvot, num_labels, num_attributes, max_item_length, 0, features);
+    crfvot->num_attributes = num_attributes;
+    crfvot->num_labels = num_labels;
+    crfvot->num_sequences = num_instances;
+    crfvot->seqs = seqs;
 
 	// preprocess
-	crf1ml_preprocess(crf1mt);
-	crf1ml_set_feature_freqs(crf1mt, features);
+	crfvol_preprocess(crfvot);
+	crfvol_set_feature_freqs(crfvot, features);
 
-	crf1mc_set_num_items(crf1mt->ctx, max_item_length, crf1mt->max_paths);
+	crfvoc_set_num_items(crfvot->ctx, max_item_length, crfvot->max_paths);
 
-    crf1mt->tagger.internal = crf1mt;
-    crf1mt->tagger.tag = crf_train_tag;
+    crfvot->tagger.internal = crfvot;
+    crfvot->tagger.tag = crf_train_tag;
 
     if (strcmp(opt->algorithm, "lbfgs") == 0) {
-        ret = crf1ml_lbfgs(crf1mt, opt);
+        ret = crfvol_lbfgs(crfvot, opt);
     } else {
         return CRFERR_INTERNAL_LOGIC;
     }
@@ -923,21 +923,21 @@ static int crf_train_train(
 
 static int crf_train_save(crf_trainer_t* trainer, const char *filename, crf_dictionary_t* attrs, crf_dictionary_t* labels)
 {
-    crf1ml_t *crf1mt = (crf1ml_t*)trainer->internal;
+    crfvol_t *crfvot = (crfvol_t*)trainer->internal;
     int a, k, l, ret;
     int *fmap = NULL, *amap = NULL;
-    crf1mmw_t* writer = NULL;
+    crfvomw_t* writer = NULL;
     const feature_refs_t *edge = NULL, *attr = NULL;
-    const floatval_t *w = crf1mt->w;
+    const floatval_t *w = crfvot->w;
     const floatval_t threshold = 0.01;
-    const int L = crf1mt->num_labels;
-    const int A = crf1mt->num_attributes;
-    const int K = crf1mt->num_features;
+    const int L = crfvot->num_labels;
+    const int A = crfvot->num_attributes;
+    const int K = crfvot->num_features;
     int J = 0, B = 0;
 
     /* Start storing the model. */
-    logging(crf1mt->lg, "Storing the model\n");
-    crf1mt->clk_begin = clock();
+    logging(crfvot->lg, "Storing the model\n");
+    crfvot->clk_begin = clock();
 
     /* Allocate and initialize the feature mapping. */
     fmap = (int*)calloc(K, sizeof(int));
@@ -966,22 +966,22 @@ static int crf_train_save(crf_trainer_t* trainer, const char *filename, crf_dict
     /*
      *    Open a model writer.
      */
-    writer = crf1mmw(filename);
+    writer = crfvomw(filename);
     if (writer == NULL) {
         goto error_exit;
     }
 
     /* Open a feature chunk in the model file. */
-    if (ret = crf1mmw_open_features(writer)) {
+    if (ret = crfvomw_open_features(writer)) {
         goto error_exit;
     }
 
     /* Determine a set of active features and attributes. */
-    for (k = 0;k < crf1mt->num_features;++k) {
-        crf1ml_feature_t* f = &crf1mt->features[k];
+    for (k = 0;k < crfvot->num_features;++k) {
+        crfvol_feature_t* f = &crfvot->features[k];
         if (w[k] != 0) {
             int attr;
-            crf1mm_feature_t feat;
+            crfvom_feature_t feat;
 
 #ifndef    CRF_TRAIN_SAVE_NO_PRUNING
             /* The feature (#k) will have a new feature id (#J). */
@@ -999,43 +999,43 @@ static int crf_train_save(crf_trainer_t* trainer, const char *filename, crf_dict
             feat.weight = w[k];
 
             /* Write the feature. */
-            if (ret = crf1mmw_put_feature(writer, fmap[k], &feat)) {
+            if (ret = crfvomw_put_feature(writer, fmap[k], &feat)) {
                 goto error_exit;
             }
         }
     }
 
     /* Close the feature chunk. */
-    if (ret = crf1mmw_close_features(writer)) {
+    if (ret = crfvomw_close_features(writer)) {
         goto error_exit;
     }
 
-    logging(crf1mt->lg, "Number of active features: %d (%d)\n", J, K);
-    logging(crf1mt->lg, "Number of active attributes: %d (%d)\n", B, A);
-    logging(crf1mt->lg, "Number of active labels: %d (%d)\n", L, L);
+    logging(crfvot->lg, "Number of active features: %d (%d)\n", J, K);
+    logging(crfvot->lg, "Number of active attributes: %d (%d)\n", B, A);
+    logging(crfvot->lg, "Number of active labels: %d (%d)\n", L, L);
 
     /* Write labels. */
-    logging(crf1mt->lg, "Writing labels\n", L);
-    if (ret = crf1mmw_open_labels(writer, L)) {
+    logging(crfvot->lg, "Writing labels\n", L);
+    if (ret = crfvomw_open_labels(writer, L)) {
         goto error_exit;
     }
     for (l = 0;l < L;++l) {
         const char *str = NULL;
         labels->to_string(labels, l, &str);
         if (str != NULL) {
-            if (ret = crf1mmw_put_label(writer, l, str)) {
+            if (ret = crfvomw_put_label(writer, l, str)) {
                 goto error_exit;
             }
             labels->free_(labels, str);
         }
     }
-    if (ret = crf1mmw_close_labels(writer)) {
+    if (ret = crfvomw_close_labels(writer)) {
         goto error_exit;
     }
 
     /* Write attributes. */
-    logging(crf1mt->lg, "Writing attributes\n");
-    if (ret = crf1mmw_open_attrs(writer, B)) {
+    logging(crfvot->lg, "Writing attributes\n");
+    if (ret = crfvomw_open_attrs(writer, B)) {
         goto error_exit;
     }
     for (a = 0;a < A;++a) {
@@ -1043,21 +1043,21 @@ static int crf_train_save(crf_trainer_t* trainer, const char *filename, crf_dict
             const char *str = NULL;
             attrs->to_string(attrs, a, &str);
             if (str != NULL) {
-                if (ret = crf1mmw_put_attr(writer, amap[a], str)) {
+                if (ret = crfvomw_put_attr(writer, amap[a], str)) {
                     goto error_exit;
                 }
                 attrs->free_(attrs, str);
             }
         }
     }
-    if (ret = crf1mmw_close_attrs(writer)) {
+    if (ret = crfvomw_close_attrs(writer)) {
         goto error_exit;
     }
 
     /* Close the writer. */
-    crf1mmw_close(writer);
-    logging(crf1mt->lg, "Seconds required: %.3f\n", (clock() - crf1mt->clk_begin) / (double)CLOCKS_PER_SEC);
-    logging(crf1mt->lg, "\n");
+    crfvomw_close(writer);
+    logging(crfvot->lg, "Seconds required: %.3f\n", (clock() - crfvot->clk_begin) / (double)CLOCKS_PER_SEC);
+    logging(crfvot->lg, "\n");
 
     free(amap);
     free(fmap);
@@ -1065,7 +1065,7 @@ static int crf_train_save(crf_trainer_t* trainer, const char *filename, crf_dict
 
 error_exit:
     if (writer != NULL) {
-        crf1mmw_close(writer);
+        crfvomw_close(writer);
     }
     if (amap != NULL) {
         free(amap);
@@ -1091,16 +1091,16 @@ static int crf_train_release(crf_trainer_t* trainer)
 
 static crf_params_t* crf_train_params(crf_trainer_t* trainer)
 {
-    crf1ml_t *crf1mt = (crf1ml_t*)trainer->internal;
-    crf_params_t* params = crf1mt->params;
+    crfvol_t *crfvot = (crfvol_t*)trainer->internal;
+    crf_params_t* params = crfvot->params;
     params->addref(params);
     return params;
 }
 
 
-int crf1ml_create_instance(const char *interface, void **ptr)
+int crfvol_create_instance(const char *interface, void **ptr)
 {
-    if (strcmp(interface, "trainer.crf1m") == 0) {
+    if (strcmp(interface, "trainer.crfvo") == 0) {
         crf_trainer_t* trainer = (crf_trainer_t*)calloc(1, sizeof(crf_trainer_t));
 
         trainer->nref = 1;
@@ -1113,7 +1113,7 @@ int crf1ml_create_instance(const char *interface, void **ptr)
         trainer->set_evaluate_callback = crf_train_set_evaluate_callback;
         trainer->train = crf_train_train;
         trainer->save = crf_train_save;
-        trainer->internal = crf1ml_new();
+        trainer->internal = crfvol_new();
 
         *ptr = trainer;
         return 0;

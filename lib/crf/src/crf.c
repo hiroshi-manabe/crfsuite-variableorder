@@ -39,14 +39,14 @@
 
 #include <crfsuite.h>
 
-int crf1ml_create_instance(const char *iid, void **ptr);
+int crfvol_create_instance(const char *iid, void **ptr);
 int crf_dictionary_create_instance(const char *interface, void **ptr);
-int crf1m_create_instance_from_file(const char *filename, void **ptr);
+int crfvo_create_instance_from_file(const char *filename, void **ptr);
 
 int crf_create_instance(const char *iid, void **ptr)
 {
     int ret = 
-        crf1ml_create_instance(iid, ptr) == 0 ||
+        crfvol_create_instance(iid, ptr) == 0 ||
         crf_dictionary_create_instance(iid, ptr) == 0;
 
     return ret;
@@ -54,7 +54,7 @@ int crf_create_instance(const char *iid, void **ptr)
 
 int crf_create_instance_from_file(const char *filename, void **ptr)
 {
-    int ret = crf1m_create_instance_from_file(filename, ptr);
+    int ret = crfvo_create_instance_from_file(filename, ptr);
     return ret;
 }
 

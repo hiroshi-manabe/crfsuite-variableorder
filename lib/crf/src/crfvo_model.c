@@ -28,7 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: crf1m_model.c 176 2010-07-14 09:31:04Z naoaki $ */
+/* $Id: crfvo_model.c 176 2010-07-14 09:31:04Z naoaki $ */
 
 #include "os.h"
 
@@ -88,7 +88,7 @@ typedef struct {
     uint32_t    num;            /* Number of items. */
 } feature_header_t;
 
-struct tag_crf1mm {
+struct tag_crfvom {
     uint8_t*    buffer_orig;
     uint8_t*    buffer;
     uint32_t    size;
@@ -97,7 +97,7 @@ struct tag_crf1mm {
     cqdb_t*     attrs;
 };
 
-struct tag_crf1mmw {
+struct tag_crfvomw {
     FILE *fp;
     int state;
     header_t header;
@@ -209,13 +209,13 @@ static int read_float(uint8_t* buffer, floatval_t* value)
     return sizeof(*value);
 }
 
-crf1mmw_t* crf1mmw(const char *filename)
+crfvomw_t* crfvomw(const char *filename)
 {
     header_t *header = NULL;
-    crf1mmw_t *writer = NULL;
+    crfvomw_t *writer = NULL;
 
     /* Create a writer instance. */
-    writer = (crf1mmw_t*)calloc(1, sizeof(crf1mmw_t));
+    writer = (crfvomw_t*)calloc(1, sizeof(crfvomw_t));
     if (writer == NULL) {
         goto error_exit;
     }
@@ -249,7 +249,7 @@ error_exit:
     return NULL;
 }
 
-int crf1mmw_close(crf1mmw_t* writer)
+int crfvomw_close(crfvomw_t* writer)
 {
     FILE *fp = writer->fp;
     header_t *header = &writer->header;
@@ -296,7 +296,7 @@ error_exit:
     return 1;
 }
 
-int crf1mmw_open_labels(crf1mmw_t* writer, int num_labels)
+int crfvomw_open_labels(crfvomw_t* writer, int num_labels)
 {
     /* Check if we aren't writing anything at this moment. */
     if (writer->state != WSTATE_NONE) {
@@ -318,7 +318,7 @@ int crf1mmw_open_labels(crf1mmw_t* writer, int num_labels)
     return 0;
 }
 
-int crf1mmw_close_labels(crf1mmw_t* writer)
+int crfvomw_close_labels(crfvomw_t* writer)
 {
     /* Make sure that we are writing labels. */
     if (writer->state != WSTATE_LABELS) {
@@ -335,7 +335,7 @@ int crf1mmw_close_labels(crf1mmw_t* writer)
     return 0;
 }
 
-int crf1mmw_put_label(crf1mmw_t* writer, int lid, const char *value)
+int crfvomw_put_label(crfvomw_t* writer, int lid, const char *value)
 {
     /* Make sure that we are writing labels. */
     if (writer->state != WSTATE_LABELS) {
@@ -350,7 +350,7 @@ int crf1mmw_put_label(crf1mmw_t* writer, int lid, const char *value)
     return 0;
 }
 
-int crf1mmw_open_attrs(crf1mmw_t* writer, int num_attrs)
+int crfvomw_open_attrs(crfvomw_t* writer, int num_attrs)
 {
     /* Check if we aren't writing anything at this moment. */
     if (writer->state != WSTATE_NONE) {
@@ -372,7 +372,7 @@ int crf1mmw_open_attrs(crf1mmw_t* writer, int num_attrs)
     return 0;
 }
 
-int crf1mmw_close_attrs(crf1mmw_t* writer)
+int crfvomw_close_attrs(crfvomw_t* writer)
 {
     /* Make sure that we are writing attributes. */
     if (writer->state != WSTATE_ATTRS) {
@@ -389,7 +389,7 @@ int crf1mmw_close_attrs(crf1mmw_t* writer)
     return 0;
 }
 
-int crf1mmw_put_attr(crf1mmw_t* writer, int aid, const char *value)
+int crfvomw_put_attr(crfvomw_t* writer, int aid, const char *value)
 {
     /* Make sure that we are writing labels. */
     if (writer->state != WSTATE_ATTRS) {
@@ -404,7 +404,7 @@ int crf1mmw_put_attr(crf1mmw_t* writer, int aid, const char *value)
     return 0;
 }
 
-int crf1mmw_open_labelrefs(crf1mmw_t* writer, int num_labels)
+int crfvomw_open_labelrefs(crfvomw_t* writer, int num_labels)
 {
     uint32_t offset;
     FILE *fp = writer->fp;
@@ -444,7 +444,7 @@ int crf1mmw_open_labelrefs(crf1mmw_t* writer, int num_labels)
     return 0;
 }
 
-int crf1mmw_close_labelrefs(crf1mmw_t* writer)
+int crfvomw_close_labelrefs(crfvomw_t* writer)
 {
     uint32_t i;
     FILE *fp = writer->fp;
@@ -481,7 +481,7 @@ int crf1mmw_close_labelrefs(crf1mmw_t* writer)
     return 0;
 }
 
-int crf1mmw_put_labelref(crf1mmw_t* writer, int lid, const feature_refs_t* ref, int *map)
+int crfvomw_put_labelref(crfvomw_t* writer, int lid, const feature_refs_t* ref, int *map)
 {
     int i, fid;
     uint32_t n = 0, offset = 0;
@@ -511,7 +511,7 @@ int crf1mmw_put_labelref(crf1mmw_t* writer, int lid, const feature_refs_t* ref, 
     return 0;
 }
 
-int crf1mmw_open_attrrefs(crf1mmw_t* writer, int num_attrs)
+int crfvomw_open_attrrefs(crfvomw_t* writer, int num_attrs)
 {
     uint32_t offset;
     FILE *fp = writer->fp;
@@ -551,7 +551,7 @@ int crf1mmw_open_attrrefs(crf1mmw_t* writer, int num_attrs)
     return 0;
 }
 
-int crf1mmw_close_attrrefs(crf1mmw_t* writer)
+int crfvomw_close_attrrefs(crfvomw_t* writer)
 {
     uint32_t i;
     FILE *fp = writer->fp;
@@ -588,7 +588,7 @@ int crf1mmw_close_attrrefs(crf1mmw_t* writer)
     return 0;
 }
 
-int crf1mmw_put_attrref(crf1mmw_t* writer, int aid, const feature_refs_t* ref, int *map)
+int crfvomw_put_attrref(crfvomw_t* writer, int aid, const feature_refs_t* ref, int *map)
 {
     int i, fid;
     uint32_t n = 0, offset = 0;
@@ -618,7 +618,7 @@ int crf1mmw_put_attrref(crf1mmw_t* writer, int aid, const feature_refs_t* ref, i
     return 0;
 }
 
-int crf1mmw_open_features(crf1mmw_t* writer)
+int crfvomw_open_features(crfvomw_t* writer)
 {
     FILE *fp = writer->fp;
     feature_header_t* hfeat = NULL;
@@ -644,7 +644,7 @@ int crf1mmw_open_features(crf1mmw_t* writer)
     return 0;
 }
 
-int crf1mmw_close_features(crf1mmw_t* writer)
+int crfvomw_close_features(crfvomw_t* writer)
 {
     FILE *fp = writer->fp;
     feature_header_t* hfeat = writer->hfeat;
@@ -677,7 +677,7 @@ int crf1mmw_close_features(crf1mmw_t* writer)
     return 0;
 }
 
-int crf1mmw_put_feature(crf1mmw_t* writer, int fid, const crf1mm_feature_t* f)
+int crfvomw_put_feature(crfvomw_t* writer, int fid, const crfvom_feature_t* f)
 {
     FILE *fp = writer->fp;
     feature_header_t* hfeat = writer->hfeat;
@@ -700,14 +700,14 @@ int crf1mmw_put_feature(crf1mmw_t* writer, int fid, const crf1mm_feature_t* f)
     return 0;
 }
 
-crf1mm_t* crf1mm_new(const char *filename)
+crfvom_t* crfvom_new(const char *filename)
 {
     FILE *fp = NULL;
     uint8_t* p = NULL;
-    crf1mm_t *model = NULL;
+    crfvom_t *model = NULL;
     header_t *header = NULL;
 
-    model = (crf1mm_t*)calloc(1, sizeof(crf1mm_t));
+    model = (crfvom_t*)calloc(1, sizeof(crfvom_t));
     if (model == NULL) {
         goto error_exit;
     }
@@ -767,7 +767,7 @@ error_exit:
     return NULL;
 }
 
-void crf1mm_close(crf1mm_t* model)
+void crfvom_close(crfvom_t* model)
 {
     if (model->labels != NULL) {
         cqdb_delete(model->labels);
@@ -786,17 +786,17 @@ void crf1mm_close(crf1mm_t* model)
     free(model);
 }
 
-int crf1mm_get_num_attrs(crf1mm_t* model)
+int crfvom_get_num_attrs(crfvom_t* model)
 {
     return model->header->num_attrs;
 }
 
-int crf1mm_get_num_labels(crf1mm_t* model)
+int crfvom_get_num_labels(crfvom_t* model)
 {
     return model->header->num_labels;
 }
 
-const char *crf1mm_to_label(crf1mm_t* model, int lid)
+const char *crfvom_to_label(crfvom_t* model, int lid)
 {
     if (model->labels != NULL) {
         return cqdb_to_string(model->labels, lid);
@@ -805,7 +805,7 @@ const char *crf1mm_to_label(crf1mm_t* model, int lid)
     }
 }
 
-int crf1mm_to_lid(crf1mm_t* model, const char *value)
+int crfvom_to_lid(crfvom_t* model, const char *value)
 {
     if (model->labels != NULL) {
         return cqdb_to_id(model->labels, value);
@@ -814,7 +814,7 @@ int crf1mm_to_lid(crf1mm_t* model, const char *value)
     }
 }
 
-int crf1mm_to_aid(crf1mm_t* model, const char *value)
+int crfvom_to_aid(crfvom_t* model, const char *value)
 {
     if (model->attrs != NULL) {
         return cqdb_to_id(model->attrs, value);
@@ -823,7 +823,7 @@ int crf1mm_to_aid(crf1mm_t* model, const char *value)
     }
 }
 
-const char *crf1mm_to_attr(crf1mm_t* model, int aid)
+const char *crfvom_to_attr(crfvom_t* model, int aid)
 {
     if (model->attrs != NULL) {
         return cqdb_to_string(model->attrs, aid);
@@ -832,7 +832,7 @@ const char *crf1mm_to_attr(crf1mm_t* model, int aid)
     }
 }
 
-int crf1mm_get_labelref(crf1mm_t* model, int lid, feature_refs_t* ref)
+int crfvom_get_labelref(crfvom_t* model, int lid, feature_refs_t* ref)
 {
     uint8_t *p = model->buffer;
     uint32_t offset;
@@ -848,7 +848,7 @@ int crf1mm_get_labelref(crf1mm_t* model, int lid, feature_refs_t* ref)
     return 0;
 }
 
-int crf1mm_get_attrref(crf1mm_t* model, int aid, feature_refs_t* ref)
+int crfvom_get_attrref(crfvom_t* model, int aid, feature_refs_t* ref)
 {
     uint8_t *p = model->buffer;
     uint32_t offset;
@@ -864,7 +864,7 @@ int crf1mm_get_attrref(crf1mm_t* model, int aid, feature_refs_t* ref)
     return 0;
 }
 
-int crf1mm_get_featureid(feature_refs_t* ref, int i)
+int crfvom_get_featureid(feature_refs_t* ref, int i)
 {
     uint32_t fid;
     uint8_t* p = (uint8_t*)ref->fids;
@@ -873,7 +873,7 @@ int crf1mm_get_featureid(feature_refs_t* ref, int i)
     return (int)fid;
 }
 
-int crf1mm_get_feature(crf1mm_t* model, int fid, crf1mm_feature_t* f)
+int crfvom_get_feature(crfvom_t* model, int fid, crfvom_feature_t* f)
 {
     uint8_t *p = NULL;
     uint32_t val = 0;
@@ -889,12 +889,12 @@ int crf1mm_get_feature(crf1mm_t* model, int fid, crf1mm_feature_t* f)
     return 0;
 }
 
-void crf1mm_dump(crf1mm_t* crf1mm, FILE *fp)
+void crfvom_dump(crfvom_t* crfvom, FILE *fp)
 {
     int j, k;
     uint32_t i;
     feature_refs_t refs;
-    const header_t* hfile = crf1mm->header;
+    const header_t* hfile = crfvom->header;
 
     /* Dump the file header. */
     fprintf(fp, "FILEHEADER = {\n");
@@ -918,9 +918,9 @@ void crf1mm_dump(crf1mm_t* crf1mm, FILE *fp)
     /* Dump the labels. */
     fprintf(fp, "LABELS = {\n");
     for (i = 0;i < hfile->num_labels;++i) {
-        const char *str = crf1mm_to_label(crf1mm, i);
+        const char *str = crfvom_to_label(crfvom, i);
 #if 0
-        int check = crf1mm_to_lid(crf1mm, str);
+        int check = crfvom_to_lid(crfvom, str);
         if (i != check) {
             fprintf(fp, "WARNING: inconsistent label CQDB\n");
         }
@@ -933,9 +933,9 @@ void crf1mm_dump(crf1mm_t* crf1mm, FILE *fp)
     /* Dump the attributes. */
     fprintf(fp, "ATTRIBUTES = {\n");
     for (i = 0;i < hfile->num_attrs;++i) {
-        const char *str = crf1mm_to_attr(crf1mm, i);
+        const char *str = crfvom_to_attr(crfvom, i);
 #if 0
-        int check = crf1mm_to_aid(crf1mm, str);
+        int check = crfvom_to_aid(crfvom, str);
         if (i != check) {
             fprintf(fp, "WARNING: inconsistent attribute CQDB\n");
         }
@@ -948,22 +948,22 @@ void crf1mm_dump(crf1mm_t* crf1mm, FILE *fp)
     /* Dump the transition features. */
     fprintf(fp, "FEATURES = {\n");
     for (i = 0;i < hfile->num_attrs;++i) {
-        crf1mm_get_attrref(crf1mm, i, &refs);
+        crfvom_get_attrref(crfvom, i, &refs);
         for (j = 0;j < refs.num_features;++j) {
-            crf1mm_feature_t f;
-            int fid = crf1mm_get_featureid(&refs, j);
+            crfvom_feature_t f;
+            int fid = crfvom_get_featureid(&refs, j);
             const char *attr = NULL, *to = NULL;
 
-            crf1mm_get_feature(crf1mm, fid, &f);
+            crfvom_get_feature(crfvom, fid, &f);
 #if 0
             if (f.src != i) {
                 fprintf(fp, "WARNING: an inconsistent attribute reference.\n");
             }
 #endif
-            attr = crf1mm_to_attr(crf1mm, f.attr);
+            attr = crfvom_to_attr(crfvom, f.attr);
             fprintf(fp, "       %s -->", attr, to, f.weight);
 			for (k = 0; k < f.order; ++k) {
-				to = crf1mm_to_label(crf1mm, f.label_sequence[k]);
+				to = crfvom_to_label(crfvom, f.label_sequence[k]);
 				fprintf(fp, " %s", to);
 			}
 			fprintf(fp, " : %f\n", f.weight);
