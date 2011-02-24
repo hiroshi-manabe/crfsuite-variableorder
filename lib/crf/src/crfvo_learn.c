@@ -330,26 +330,26 @@ struct PrevIdAndFeatureIdList
 	}
 };
 
-crfvo_preprocessed_data_t* crfvocp_new(int L, int num_paths, int num_fids)
+crfvo_preprocessed_data_t* crfvopp_new(int L, int num_paths, int num_fids)
 {
-	crfvo_preprocessed_data_t* cp = (crfvo_preprocessed_data_t*)calloc(1, sizeof(crfvo_preprocessed_data_t));	
+	crfvo_preprocessed_data_t* pp = (crfvo_preprocessed_data_t*)calloc(1, sizeof(crfvo_preprocessed_data_t));	
 
-	cp->num_fids = num_fids;
-	cp->num_paths = num_paths;
-	cp->fids = (int*)malloc(sizeof(int) * num_fids);
-	cp->paths = (crf_path_t*)malloc(sizeof(crf_path_t) * num_paths);
-	cp->num_paths_by_label = (int*)malloc(sizeof(int) * (L+1));
-	return cp;
+	pp->num_fids = num_fids;
+	pp->num_paths = num_paths;
+	pp->fids = (int*)malloc(sizeof(int) * num_fids);
+	pp->paths = (crf_path_t*)malloc(sizeof(crf_path_t) * num_paths);
+	pp->num_paths_by_label = (int*)malloc(sizeof(int) * (L+1));
+	return pp;
 }
 
-void crfvocp_delete(crfvo_preprocessed_data_t* cp)
+void crfvopp_delete(crfvo_preprocessed_data_t* pp)
 {
-	if (cp != NULL) {
-		free(cp->fids);
-		free(cp->paths);
-		free(cp->num_paths_by_label);
+	if (pp != NULL) {
+		free(pp->fids);
+		free(pp->paths);
+		free(pp->num_paths_by_label);
 	}
-	free(cp);
+	free(pp);
 }
 
 void crfvol_set_context(crfvol_t* trainer, const crf_sequence_t* seq)
@@ -507,8 +507,8 @@ void crfvol_preprocess_sequence(crfvol_t* trainer, crf_sequence_t* seq)
 	        item = &seq->items[t];
 
 			if (item->preprocessed_data_delete_func) item->preprocessed_data_delete_func(item->preprocessed_data);
-			item->preprocessed_data = (crfvo_preprocessed_data_t*)crfvocp_new(L, path_count, FEATURE_COUNTS(t));
-			item->preprocessed_data_delete_func = (void (*)(void*))crfvocp_delete;
+			item->preprocessed_data = (crfvo_preprocessed_data_t*)crfvopp_new(L, path_count, FEATURE_COUNTS(t));
+			item->preprocessed_data_delete_func = (void (*)(void*))crfvopp_delete;
 			preprocessed_data = (crfvo_preprocessed_data_t*)item->preprocessed_data;
 
 			memcpy(preprocessed_data->fids, feature_ids, FEATURE_COUNTS(t) * sizeof(int));
