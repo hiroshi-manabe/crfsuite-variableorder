@@ -44,7 +44,7 @@
 #include "params.h"
 
 #include "logging.h"
-#include "crf1m.h"
+#include "crfvo.h"
 
 int crf1m_model_create(const char *filename, crf_model_t** ptr_model);
 

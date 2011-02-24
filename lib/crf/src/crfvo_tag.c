@@ -43,7 +43,7 @@
 
 #include <crfsuite.h>
 
-#include "crf1m.h"
+#include "crfvo.h"
 
 struct tag_crf1mt {
     int num_labels;            /**< Number of distinct output labels (L). */

@@ -43,7 +43,7 @@
 #include <time.h>
 
 #include <crfsuite.h>
-#include "crf1m.h"
+#include "crfvo.h"
 
 #include "logging.h"
 #include "params.h"

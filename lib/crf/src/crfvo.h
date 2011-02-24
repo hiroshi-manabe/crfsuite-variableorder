@@ -28,7 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: crf1m.h 168 2010-01-29 05:46:24Z naoaki $ */
+/* $Id: crfvo.h 168 2010-01-29 05:46:24Z naoaki $ */
 
 #ifndef    __CRF1M_H__
 #define    __CRF1M_H__

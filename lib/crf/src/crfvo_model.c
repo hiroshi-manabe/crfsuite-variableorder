@@ -39,7 +39,7 @@
 #include <cqdb.h>
 
 #include <crfsuite.h>
-#include "crf1m.h"
+#include "crfvo.h"
 
 #define FILEMAGIC       "lCRF"
 #define MODELTYPE       "FOMC"

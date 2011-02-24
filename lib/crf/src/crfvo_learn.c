@@ -159,7 +159,7 @@ extern "C" {
 #include "mt19937ar.h"
 
 #include "logging.h"
-#include "crf1m.h"
+#include "crfvo.h"
 
 #define    FEATURE(trainer, k) \
     (&(trainer)->features[(k)])

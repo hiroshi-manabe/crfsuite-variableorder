@@ -48,7 +48,7 @@ extern "C" {
 
 #include <crfsuite.h>
 
-#include "crf1m.h"
+#include "crfvo.h"
 
 crf1m_context_t* crf1mc_new(int L, int T, int max_paths)
 {

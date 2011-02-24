@@ -48,7 +48,7 @@ extern "C" {
 #include <crfsuite.h>
 
 #include "logging.h"
-#include "crf1m.h"
+#include "crfvo.h"
 #include "rumavl.h"    /* AVL tree library necessary for feature generation. */
 
 /**
