@@ -316,7 +316,7 @@ void crfvot_delete(crfvot_t* crfvot);
 int crfvot_tag(crfvot_t* crfvot, crf_sequence_t *inst, crf_output_t* output);
 
 /* crfvo_preprocess.c */
-crfvo_preprocessed_data_t* crfvopp_new(int L, int num_paths, int num_fids);
-void crfvopp_delete(crfvo_preprocessed_data_t* pp);
+crfvo_preprocessed_data_t* crfvopd_new(int L, int num_paths, int num_fids);
+void crfvopd_delete(crfvo_preprocessed_data_t* pp);
 
 #endif/*__CRF1M_H__*/

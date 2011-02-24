@@ -485,8 +485,8 @@ void crfvol_preprocess_sequence(crfvol_t* trainer, crf_sequence_t* seq)
 	        item = &seq->items[t];
 
 			if (item->preprocessed_data_delete_func) item->preprocessed_data_delete_func(item->preprocessed_data);
-			item->preprocessed_data = (crfvo_preprocessed_data_t*)crfvopp_new(L, path_count, FEATURE_COUNTS(t));
-			item->preprocessed_data_delete_func = (void (*)(void*))crfvopp_delete;
+			item->preprocessed_data = (crfvo_preprocessed_data_t*)crfvopd_new(L, path_count, FEATURE_COUNTS(t));
+			item->preprocessed_data_delete_func = (void (*)(void*))crfvopd_delete;
 			preprocessed_data = (crfvo_preprocessed_data_t*)item->preprocessed_data;
 
 			memcpy(preprocessed_data->fids, feature_ids, FEATURE_COUNTS(t) * sizeof(int));

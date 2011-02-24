@@ -38,25 +38,25 @@
 #include "crfvo.h"
 
 
-crfvo_preprocessed_data_t* crfvopp_new(int L, int num_paths, int num_fids)
+crfvo_preprocessed_data_t* crfvopd_new(int L, int num_paths, int num_fids)
 {
-	crfvo_preprocessed_data_t* pp = (crfvo_preprocessed_data_t*)calloc(1, sizeof(crfvo_preprocessed_data_t));	
+	crfvo_preprocessed_data_t* pd = (crfvo_preprocessed_data_t*)calloc(1, sizeof(crfvo_preprocessed_data_t));	
 
-	pp->num_fids = num_fids;
-	pp->num_paths = num_paths;
-	pp->fids = (int*)malloc(sizeof(int) * num_fids);
-	pp->paths = (crf_path_t*)malloc(sizeof(crf_path_t) * num_paths);
-	pp->num_paths_by_label = (int*)malloc(sizeof(int) * (L+1));
-	return pp;
+	pd->num_fids = num_fids;
+	pd->num_paths = num_paths;
+	pd->fids = (int*)malloc(sizeof(int) * num_fids);
+	pd->paths = (crf_path_t*)malloc(sizeof(crf_path_t) * num_paths);
+	pd->num_paths_by_label = (int*)malloc(sizeof(int) * (L+1));
+	return pd;
 }
 
-void crfvopp_delete(crfvo_preprocessed_data_t* pp)
+void crfvopd_delete(crfvo_preprocessed_data_t* pd)
 {
-	if (pp != NULL) {
-		free(pp->fids);
-		free(pp->paths);
-		free(pp->num_paths_by_label);
+	if (pd != NULL) {
+		free(pd->fids);
+		free(pd->paths);
+		free(pd->num_paths_by_label);
 	}
-	free(pp);
+	free(pd);
 }
 
