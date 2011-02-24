@@ -313,6 +313,10 @@
 				RelativePath=".\src\crf1m_tag.c"
 				>
 			</File>
+			<File
+				RelativePath=".\src\crfvo_preprocess.c"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Utility"
