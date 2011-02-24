@@ -116,6 +116,12 @@ void buf_delete(buffer_manager_t* manager)
 	free(manager->buffer_);
 }
 
+struct
+{
+	int feature_id;
+	int next_index;
+} feature_id_list_t;
+
 void crfvopp_new(crfvopp_t* pp)
 {
 	pp->path_manager_ = (buffer_manager_t*)malloc(sizeof(buffer_manager_t));
