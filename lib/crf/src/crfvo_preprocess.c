@@ -219,7 +219,7 @@ void trie_enumerate_path_(trie_t* trie, int node, int valid_parent, int* path_id
 }
 
 // path_id_to_index must have the size of maximum path_id
-void enumerate_path(trie_t* trie, int* path_id_to_index, int* num_paths_by_label)
+void trie_enumerate_path(trie_t* trie, int* path_id_to_index, int* num_paths_by_label)
 {
 	int i;
 	int root_node = trie->root;
