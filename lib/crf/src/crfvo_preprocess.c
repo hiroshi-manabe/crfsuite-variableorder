@@ -44,8 +44,8 @@ crfvo_preprocessed_data_t* crfvopd_new(int L, int num_paths, int num_fids)
 {
 	crfvo_preprocessed_data_t* pd = (crfvo_preprocessed_data_t*)calloc(1, sizeof(crfvo_preprocessed_data_t));	
 
-	pd->num_fids = num_fids;
 	pd->num_paths = num_paths;
+	pd->num_fids = num_fids;
 	pd->fids = (int*)malloc(sizeof(int) * num_fids);
 	pd->paths = (crfvo_path_t*)malloc(sizeof(crfvo_path_t) * num_paths);
 	pd->num_paths_by_label = (int*)malloc(sizeof(int) * (L+1));
@@ -118,123 +118,176 @@ void buf_delete(buffer_manager_t* manager)
 
 typedef struct
 {
-	int feature_id;
+	int fid;
 	int next;
-} feature_id_list_t;
+} fid_list_t;
 
 typedef struct {
-	int path_id_plus_1;
+	int path_plus_1;
 	int children_plus_1;
 } trie_node_t;
+
+typedef struct {
+	int prev_path;
+	int index;
+	int fid_list;
+} path_t;
 
 typedef struct {
 	int label_number;
 	int root;
 	int start_path;
-	int last_path_id;
+	int path_count;
+	int fid_count;
 	buffer_manager_t* node_manager;
 	buffer_manager_t* path_manager;
+	buffer_manager_t* fid_list_manager;
 } trie_t;
 
-#define NODE(trie, node) ((trie_node_t*)buf_from_index(trie->node_manager, node))
+#define INVALID (-1)
+#define IS_VALID(x) (x != -1)
 
-#define GET_PATH_ID(trie, node) (NODE(trie, node)->path_id_plus_1 - 1)
-#define SET_PATH_ID(trie, node, path_id) (NODE(trie, node)->path_id_plus_1 = path_id + 1)
+#define NODE(trie, node) ((trie_node_t*)buf_from_index(trie->node_manager, node))
+#define GET_PATH(trie, node) (NODE(trie, node)->path_plus_1 - 1)
+#define ASSIGN_PATH(trie, node) { if (!IS_VALID(GET_PATH(trie, node))) { NODE(trie, node)->path_plus_1 = buf_get_new_index(trie->path_manager, 1) + 1;  trie->path_count++; } }
 #define GET_CHILD(trie, node, child_index) (NODE(trie, node)->children_plus_1 - 1 + child_index)
 #define CREATE_CHILDREN(trie, node) (NODE(trie, node)->children_plus_1 = buf_get_new_index(trie->node_manager, trie->label_number))
 #define HAS_CHILDREN(trie, node) (NODE(trie, node)->children_plus_1 != 0)
 
-#define PATH(trie, path) ((crfvo_path_t*)buf_from_index(trie->path_manager, path))
+#define PATH(trie, path) ((path_t*)buf_from_index(trie->path_manager, path))
 #define CREATE_PATH(trie) (buf_get_new_index(trie->path_manager, 1))
 
-void trie_init(trie_t* trie, int label_number, buffer_manager_t* node_manager, buffer_manager_t* path_manager)
+#define FID_LIST(trie, fid_list) ((fid_list_t*)buf_from_index(trie->path_manager, fid_list))
+#define APPEND(trie, fid_list, fid) { int new_fid_list = buf_get_new_index(trie->fid_list_manager, 1); FID_LIST(trie, new_fid_list)->next = fid_list; FID_LIST(trie, new_fid_list)->fid = fid; fid_list = new_fid_list; }
+
+void trie_init(
+	trie_t* trie,
+	int label_number,
+	buffer_manager_t* node_manager,
+	buffer_manager_t* path_manager,
+	buffer_manager_t* fid_list_manager
+	)
 {
 	trie->label_number = label_number;
 	trie->node_manager = node_manager;
 	trie->path_manager = path_manager;
+	trie->fid_list_manager = fid_list_manager;
 	trie->root = buf_get_new_index(node_manager, 1);
-	trie->last_path_id = -1;
+	trie->path_count = 0;
+	trie->fid_count = 0;
 }
 
-int trie_insert_path(trie_t* trie, uint8_t* label_sequence, int label_sequence_len, int* created)
+void trie_insert_path(trie_t* trie, crfvol_feature_t* f, int fid)
 {
 	int i;
 	int node = trie->root;
-	int path_id;
+	int path;
 
-	for (i = 0; i < label_sequence_len; i++) {
+	for (i = 0; i < f->order; i++) {
 		if (!HAS_CHILDREN(trie, node)) {
 			CREATE_CHILDREN(trie, node);
 		}
-		node = GET_CHILD(trie, node, label_sequence[i]);
+		node = GET_CHILD(trie, node, f->label_sequence[i]);
 	}
 	
-	path_id = GET_PATH_ID(trie, node);
-
-	if (path_id == -1) {
-		trie->last_path_id++;
-		SET_PATH_ID(trie, node, trie->last_path_id);
-		path_id = trie->last_path_id;
-		*created = 1;
-	} else {
-		*created = 0;
+	ASSIGN_PATH(trie, node);
+	path = GET_PATH(trie, node);
+	if (IS_VALID(fid)) {
+		int fid_list = PATH(trie, path)->fid_list;
+		APPEND(trie, fid_list, fid);
 	}
-	return path_id;
 }
 
-int trie_get_longest_match_path_id(trie_t* trie, uint8_t* label_sequence, int label_sequence_len)
+int trie_get_longest_match_path_index(trie_t* trie, uint8_t* label_sequence, int label_sequence_len)
 {
 	int cur_node = trie->root;
 	int ret_node = cur_node;
-	int i;
+	int i, last_valid_path;
 
 	for (i = 0; i < label_sequence_len; ++i) {
+		int path;
 		if (!HAS_CHILDREN(trie, cur_node)) break;
 		cur_node = GET_CHILD(trie, cur_node, label_sequence[i]);
-		if (GET_PATH_ID(trie, cur_node) != -1) ret_node = cur_node;
+		path = GET_PATH(trie, cur_node);
+		if (IS_VALID(path)) last_valid_path = path;
 	}
-	return GET_PATH_ID(trie, ret_node);
+	return PATH(trie, last_valid_path)->index;
 }
 
 int trie_get_path_count(trie_t* trie)
 {
-	return trie->last_path_id + 1;
+	return trie->path_count;
 }
 
-void trie_enumerate_path_(trie_t* trie, int node, int valid_parent, int* path_id_to_index)
+typedef struct {
+	trie_t* trie;
+	trie_t* prev_trie;
+	int cur_path_index;
+	int cur_fid_index;
+	crfvo_preprocessed_data_t* preprocessed_data;
+} recursion_data_t;
+
+void trie_get_preprocessed_data_(int node, int valid_parent_index, recursion_data_t* r)
 {
-	int path_id = GET_PATH_ID(trie, node);
-	if (path_id != -1) {
-		int path = buf_get_new_index(trie->path_manager, 1);
-		PATH(trie, path)->longest_suffix_index = valid_parent;
-		path_id_to_index[path_id] = path - trie->start_path;
-		valid_parent = path;
+	int path = GET_PATH(r->trie, node);
+	if (IS_VALID(path)) {
+		int prev_path = PATH(r->trie, node)->prev_path;
+		int fid_list = PATH(r->trie, node)->fid_list;
+
+		r->preprocessed_data->paths[r->cur_path_index].longest_suffix_index = valid_parent_index;
+		r->preprocessed_data->paths[r->cur_path_index].prev_path_index = PATH(r->prev_trie, prev_path)->index;
+		valid_parent_index = r->cur_path_index;
+
+		while (IS_VALID(fid_list)) {
+			r->preprocessed_data->fids[r->cur_fid_index] = FID_LIST(r->trie, fid_list)->fid;
+			fid_list = FID_LIST(r->trie, fid_list)->next;
+			r->preprocessed_data->paths[r->cur_path_index].feature_count++;
+			r->cur_fid_index++;
+		}
+		r->cur_path_index++;
 	}
-	if (HAS_CHILDREN(trie, node)) {
+	if (HAS_CHILDREN(r->trie, node)) {
 		int i;
-		for (i = 0; i < trie->label_number; ++i) {
-			trie_enumerate_path_(trie, GET_CHILD(trie, node, i), valid_parent, path_id_to_index);
+		for (i = 0; i < r->trie->label_number; ++i) {
+			trie_get_preprocessed_data_(GET_CHILD(r->trie, node, i), valid_parent_index, r);
 		}
 	}
 }
 
-// path_id_to_index must have the size of maximum path_id
-void trie_enumerate_path(trie_t* trie, int* path_id_to_index, int* num_paths_by_label)
+void trie_get_preprocessed_data(trie_t* trie, trie_t* prev_trie, crfvo_preprocessed_data_t* preprocessed_data, int* num_paths_by_label)
 {
 	int i;
-	int root_node = trie->root;
-	int valid_parent = -1;
-	int path_id = GET_PATH_ID(trie, root_node);
-	int root_path;
+	int root = trie->root;
+	int path = GET_PATH(trie, root);
+	int cur_path_index = 0;
+	int valid_parent_index = 0;
+	int prev_index_by_label;
+	recursion_data_t r;
+	
+	preprocessed_data->num_paths = trie->path_count;
+	preprocessed_data->paths = (crfvo_path_t*)malloc(trie->path_count * sizeof(crfvo_path_t));
+	preprocessed_data->num_fids = trie->fid_count;
+	preprocessed_data->fids = (int*)malloc(trie->fid_count * sizeof(int));
 
-	trie->start_path = buf_get_current_index(trie->path_manager);
-	root_path = CREATE_PATH(trie);
-	path_id_to_index[path_id] = root_path - trie->start_path;
+	/* empty path */
+	preprocessed_data->paths[cur_path_index].feature_count = 0;
+	preprocessed_data->paths[cur_path_index].longest_suffix_index = INVALID;
+	preprocessed_data->paths[cur_path_index].prev_path_index = INVALID;
+	valid_parent_index = cur_path_index;
+	cur_path_index++;
 
-	trie_enumerate_path_(trie, root_node, root_path, path_id_to_index);
+	prev_index_by_label = 1;
+
+	r.cur_path_index = cur_path_index;
+	r.cur_fid_index = 0;
+	r.trie = trie;
+	r.prev_trie = prev_trie;
+	r.preprocessed_data = preprocessed_data;
 
 	for (i = 0; i < trie->label_number; ++i) {
-		num_paths_by_label[i] = path_id_to_index[GET_PATH_ID(trie, GET_CHILD(trie, root_node, i))];
+		trie_get_preprocessed_data_(GET_CHILD(trie, root, i), valid_parent_index, &r);
+		num_paths_by_label[i] = r.cur_path_index - prev_index_by_label;
+		prev_index_by_label = r.cur_path_index;
 	}
 }
 

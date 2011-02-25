@@ -55,7 +55,7 @@ typedef struct {
 // preprocessed data
 typedef struct {
 	int                num_paths;
-	crfvo_path_t*        paths;
+	crfvo_path_t*      paths;
 	int*               num_paths_by_label;
 	int                training_path_index;
 	int                num_fids;
@@ -331,6 +331,7 @@ typedef struct tag_buffer_manager buffer_manager_t;
 
 struct tag_crfvopp {
 	buffer_manager_t* path_manager;
+	buffer_manager_t* fid_list_manager;
 };
 
 typedef struct tag_crfvopp crfvopp_t;
