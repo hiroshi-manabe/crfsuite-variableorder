@@ -330,7 +330,7 @@ struct tag_buffer_manager;
 typedef struct tag_buffer_manager buffer_manager_t;
 
 struct tag_crfvopp {
-	buffer_manager_t* path_manager_;
+	buffer_manager_t* path_manager;
 };
 
 typedef struct tag_crfvopp crfvopp_t;

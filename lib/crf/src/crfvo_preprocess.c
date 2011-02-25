@@ -64,56 +64,56 @@ void crfvopd_delete(crfvo_preprocessed_data_t* pd)
 
 struct tag_buffer_manager
 {
-	void* buffer_;
-	int unit_size_;
-	int buffer_max_;
-	int buffer_size_;
+	void* buffer;
+	int unit_size;
+	int buffer_max;
+	int buffer_size;
 };
 
 void buf_init(buffer_manager_t* manager, int unit_size, int initial_buffer_max)
 {
-	manager->unit_size_ = unit_size;
-	manager->buffer_max_ = initial_buffer_max;
-	manager->buffer_ = malloc(unit_size * initial_buffer_max);
-	memset(manager->buffer_, 0, unit_size * initial_buffer_max);
-	manager->buffer_size_ = 0;
+	manager->unit_size = unit_size;
+	manager->buffer_max = initial_buffer_max;
+	manager->buffer = malloc(unit_size * initial_buffer_max);
+	memset(manager->buffer, 0, unit_size * initial_buffer_max);
+	manager->buffer_size = 0;
 }
 
 void* buf_from_index(buffer_manager_t* manager, int index)
 {
-	return (char*)manager->buffer_ + manager->unit_size_ * index;
+	return (char*)manager->buffer + manager->unit_size * index;
 }
 
 int buf_get_new_index(buffer_manager_t* manager, int count)
 {
 	int ret;
-	while (manager->buffer_max_ < manager->buffer_size_ + count) {
-		void* temp = realloc(manager->buffer_, manager->buffer_max_ * 2 * manager->unit_size_);
+	while (manager->buffer_max < manager->buffer_size + count) {
+		void* temp = realloc(manager->buffer, manager->buffer_max * 2 * manager->unit_size);
 		if (!temp) return -1;
-		manager->buffer_ = temp;
-		manager->buffer_max_ *= 2;
-		memset((char*)manager->buffer_ + manager->unit_size_ * manager->buffer_size_, 0,
-			manager->unit_size_ * (manager->buffer_max_ - manager->buffer_size_));
+		manager->buffer = temp;
+		manager->buffer_max *= 2;
+		memset((char*)manager->buffer + manager->unit_size * manager->buffer_size, 0,
+			manager->unit_size * (manager->buffer_max - manager->buffer_size));
 	}
-	ret = manager->buffer_size_;
-	manager->buffer_size_ += count;
+	ret = manager->buffer_size;
+	manager->buffer_size += count;
 	return ret;
 }
 
 int buf_get_current_index(buffer_manager_t* manager)
 {
-	return manager->buffer_size_;
+	return manager->buffer_size;
 }
 
 void buf_clear(buffer_manager_t* manager)
 {
-	memset(manager->buffer_, 0, manager->unit_size_ * manager->buffer_size_);
-	manager->buffer_size_ = 0;
+	memset(manager->buffer, 0, manager->unit_size * manager->buffer_size);
+	manager->buffer_size = 0;
 }
 
 void buf_delete(buffer_manager_t* manager)
 {
-	free(manager->buffer_);
+	free(manager->buffer);
 }
 
 typedef struct
@@ -240,11 +240,11 @@ void enumerate_path(trie_t* trie, int* path_id_to_index, int* num_paths_by_label
 
 void crfvopp_new(crfvopp_t* pp)
 {
-	pp->path_manager_ = (buffer_manager_t*)malloc(sizeof(buffer_manager_t));
+	pp->path_manager = (buffer_manager_t*)malloc(sizeof(buffer_manager_t));
 }
 
 void crfvopp_delete(crfvopp_t* pp)
 {
-	buf_delete(pp->path_manager_);
+	buf_delete(pp->path_manager);
 }
 
