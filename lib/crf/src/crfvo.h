@@ -289,8 +289,8 @@ struct tag_crfvol {
 
     void *solver_data;
 
-	void *preprocessor_data;
-	void (*preprocessor_data_delete_func)(void*);
+	void *preprocessor;
+	void (*preprocessor_delete_func)(void*);
 };
 typedef struct tag_crfvol crfvol_t;
 
@@ -339,5 +339,6 @@ typedef struct tag_crfvopp crfvopp_t;
 
 void crfvopp_new(crfvopp_t* pp);
 void crfvopp_delete(crfvopp_t* pp);
+void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_t* seq);
 
 #endif/*__CRF1M_H__*/

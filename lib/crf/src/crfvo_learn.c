@@ -316,9 +316,9 @@ void crfvol_preprocess_sequence(crfvol_t* trainer, crf_sequence_t* seq)
 #define ID_VECTOR_VECTOR(i) (id_vector_vector[i+1])
 #define FEATURE_COUNTS(i) (feature_counts[i+1])
 
-	if (!trainer->preprocessor_data) {
-		trainer->preprocessor_data = malloc(sizeof(crfvopp_t));
-		trainer->preprocessor_data_delete_func = (void (*)(void*))crfvopp_delete;
+	if (!trainer->preprocessor) {
+		trainer->preprocessor = malloc(sizeof(crfvopp_t));
+		trainer->preprocessor_delete_func = (void (*)(void*))crfvopp_delete;
 	}
 
 	for (t = -1; t < T; ++t) { // -1: BOS
@@ -592,13 +592,22 @@ void crfvol_preprocess(
 	int i;
 	logging(trainer->lg, "Compiling...\n");
 	logging_progress_start(trainer->lg);
+
+	trainer->preprocessor = malloc(sizeof(crfvopp_t));
+	trainer->preprocessor_delete_func = (void (*)(void*))crfvopp_delete;
+	crfvopp_new((crfvopp_t*)trainer->preprocessor);
+
 	for (i = 0; i < trainer->num_sequences; ++i) {
-		crfvol_preprocess_sequence(trainer, &trainer->seqs[i]);
+/*		crfvol_preprocess_sequence(trainer, &trainer->seqs[i]); */
+		crfvopp_preprocess_sequence((crfvopp_t*)trainer->preprocessor, trainer, &trainer->seqs[i]);
+
 		if (trainer->max_paths < trainer->seqs[i].max_paths) {
 			trainer->max_paths = trainer->seqs[i].max_paths;
 		}
 		logging_progress(trainer->lg, (100 * i) / trainer->num_sequences);
 	}
+
+	trainer->preprocessor_delete_func(trainer->preprocessor);
 	logging_progress_end(trainer->lg);
 }
 
@@ -688,7 +697,7 @@ crfvol_t* crfvol_new()
     crfvol_t* trainer = (crfvol_t*)calloc(1, sizeof(crfvol_t));
     trainer->lg = (logging_t*)calloc(1, sizeof(logging_t));
 	trainer->exp_weight = 0;
-	trainer->preprocessor_data = 0;
+	trainer->preprocessor = 0;
 
     /* Create an instance for CRF parameters. */
     trainer->params = params_create_instance();
@@ -703,10 +712,10 @@ void crfvol_delete(crfvol_t* trainer)
     if (trainer != NULL) {
         free(trainer->lg);
 		free(trainer->exp_weight);
-		if (trainer->preprocessor_data_delete_func) {
-			trainer->preprocessor_data_delete_func(trainer->preprocessor_data);
+		if (trainer->preprocessor_delete_func) {
+			trainer->preprocessor_delete_func(trainer->preprocessor);
 		}
-		free(trainer->preprocessor_data);
+		free(trainer->preprocessor);
     }
 }
 
@@ -804,19 +813,6 @@ static int crf_train_train(
         crfvot->lg->instance
         );
     logging(crfvot->lg, "Number of features: %d\n", features->num_features);
-	/*
-	for (i = 0; i < features->num_features; ++i) {
-		char buf[256] = {0};
-		sprintf(buf, "%d :", features->features[i].attr);
-		for (int j = 0; j < features->features[i].order; ++j) {
-			char buf2[16] = {0};
-			sprintf(buf2, " %d", features->features[i].label_sequence[j]);
-			strcat(buf, buf2);
-		}
-		strcat(buf, "\n");
-		logging(crfvot->lg, buf);
-	}
-	*/
     logging(crfvot->lg, "Seconds required: %.3f\n", (clock() - crfvot->clk_begin) / (double)CLOCKS_PER_SEC);
     logging(crfvot->lg, "\n");
 

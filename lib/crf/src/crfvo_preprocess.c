@@ -157,16 +157,17 @@ typedef struct {
 #define IS_VALID(x) (x != -1)
 
 #define NODE(trie, node) ((trie_node_t*)buf_from_index((trie)->node_manager, (node)))
+#define PATH(trie, path) ((path_t*)buf_from_index((trie)->path_manager, (path)))
+#define FID_LIST(trie, fid_list) ((fid_list_t*)buf_from_index((trie)->path_manager, (fid_list)))
+
 #define GET_PATH(trie, node) (NODE((trie), (node))->path_plus_1 - 1)
-#define ASSIGN_PATH(trie, node) { if (!IS_VALID(GET_PATH((trie), (node)))) { NODE((trie), (node))->path_plus_1 = buf_get_new_index((trie)->path_manager, 1) + 1;  (trie)->path_count++; } }
+#define ASSIGN_PATH(trie, node) { if (!IS_VALID(GET_PATH((trie), (node)))) { NODE((trie), (node))->path_plus_1 = buf_get_new_index((trie)->path_manager, 1) + 1; PATH(trie, GET_PATH(trie, node))->fid_list = INVALID; (trie)->path_count++; } }
 #define GET_CHILD(trie, node, child_index) (NODE((trie), (node))->children_plus_1 - 1 + child_index)
 #define CREATE_CHILDREN(trie, node) (NODE((trie), (node))->children_plus_1 = buf_get_new_index((trie)->node_manager, (trie)->label_number))
 #define HAS_CHILDREN(trie, node) (NODE((trie), (node))->children_plus_1 != 0)
 
-#define PATH(trie, path) ((path_t*)buf_from_index((trie)->path_manager, (path)))
 #define CREATE_PATH(trie) (buf_get_new_index((trie)->path_manager, 1))
 
-#define FID_LIST(trie, fid_list) ((fid_list_t*)buf_from_index((trie)->path_manager, (fid_list)))
 #define APPEND(trie, fid_list, fid) { int new_fid_list = buf_get_new_index((trie)->fid_list_manager, 1); FID_LIST((trie), new_fid_list)->next = (fid_list); FID_LIST((trie), new_fid_list)->fid = fid; (fid_list) = new_fid_list; }
 
 void trie_init(
@@ -273,7 +274,7 @@ void trie_get_preprocessed_data_(int node, int valid_parent_index, recursion_dat
 	}
 }
 
-void trie_get_preprocessed_data(trie_t* trie, trie_t* prev_trie, crfvo_preprocessed_data_t* preprocessed_data, int* num_paths_by_label)
+void trie_get_preprocessed_data(trie_t* trie, trie_t* prev_trie, crfvo_preprocessed_data_t* preprocessed_data)
 {
 	int i;
 	int root = trie->root;
@@ -305,7 +306,7 @@ void trie_get_preprocessed_data(trie_t* trie, trie_t* prev_trie, crfvo_preproces
 
 	for (i = 0; i < trie->label_number; ++i) {
 		trie_get_preprocessed_data_(GET_CHILD(trie, root, i), valid_parent_index, &r);
-		num_paths_by_label[i] = r.cur_path_index - prev_index_by_label;
+		preprocessed_data->num_paths_by_label[i] = r.cur_path_index - prev_index_by_label;
 		prev_index_by_label = r.cur_path_index;
 	}
 }
@@ -333,7 +334,7 @@ void crfvopp_delete(crfvopp_t* pp)
 	pp->path_manager = pp->node_manager = pp->fid_list_manager = 0;
 }
 
-void crfvopp_preprocess(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_t* seq)
+void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_t* seq)
 {
     const int T = seq->num_items;
     const int L = trainer->num_labels;
@@ -341,10 +342,10 @@ void crfvopp_preprocess(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_t* seq)
 	crf_item_t* item;
     crfvol_feature_t* f;
 	trie_t* trie_array;
+	trie_t* trie_array_orig;
 
-	trie_array = malloc(sizeof(trie_t) * (T + 1));
-	trie_array++;
-
+	trie_array_orig = malloc(sizeof(trie_t) * (T + 1));
+	trie_array = trie_array_orig + 1;
 
 	for (t = -1; t < T; ++t) { // -1: BOS
 		int created;
@@ -368,48 +369,54 @@ void crfvopp_preprocess(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_t* seq)
 			}
 		}
 		if (t == -1) continue; // BOS
-	}
 
-    item = &seq->items[t];
-	
-	for (i = 0; i < item->num_contents; ++i) {
-		int a = item->contents[i].aid;
-		const feature_refs_t* attr = ATTRIBUTE(trainer, a);
+		item = &seq->items[t];
+		
+		for (i = 0; i < item->num_contents; ++i) {
+			int a = item->contents[i].aid;
+			const feature_refs_t* attr = ATTRIBUTE(trainer, a);
 
-		/* Loop over features for the attribute. */
-		for (r = 0; r < attr->num_features; ++r) {
-			int next_path;
-			int fid;
+			/* Loop over features for the attribute. */
+			for (r = 0; r < attr->num_features; ++r) {
+				int next_path;
+				int fid;
 
-			fid = attr->fids[r];
-			f = FEATURE(trainer, fid);
-			if (
-				(f->order > t+1 && !(f->order == t+2 && f->label_sequence[f->order-1] == L)) ||
-				(f->label_sequence[f->order-1] == L && t != f->order-2 && f->order > 1) ||
-				(t == T-1 && f->label_sequence[0] != L) ||
-				(t != T-1 && f->label_sequence[0] == L)
-				) continue;
+				fid = attr->fids[r];
+				f = FEATURE(trainer, fid);
+				if (
+					(f->order > t+1 && !(f->order == t+2 && f->label_sequence[f->order-1] == L)) ||
+					(f->label_sequence[f->order-1] == L && t != f->order-2 && f->order > 1) ||
+					(t == T-1 && f->label_sequence[0] != L) ||
+					(t != T-1 && f->label_sequence[0] == L)
+					) continue;
 
-			next_path = INVALID;
-			for (j = 0; j < f->order; ++j) {
-				int created;
-				int path;
+				next_path = INVALID;
+				for (j = 0; j < f->order; ++j) {
+					int created;
+					int path;
 
-				path = trie_set_feature(&trie_array[t], f, fid, &created);
+					path = trie_set_feature(&trie_array[t], f, fid, &created);
 
-				if (IS_VALID(next_path)) {
-					PATH(&trie_array[t-j+1], next_path)->prev_path = path;
+					if (IS_VALID(next_path)) {
+						PATH(&trie_array[t-j+1], next_path)->prev_path = path;
+					}
+					if (j == f->order-1) {
+						int prev = (t-j == -1) ? INVALID : EMPTY;
+						PATH(&trie_array[t-j], path)->prev_path = prev;
+					}
+					if (!created) break;
+					next_path = path;
+					fid = -1;
 				}
-				if (j == f->order-1) {
-					int prev = (t-j == -1) ? INVALID : EMPTY;
-					PATH(&trie_array[t-j], path)->prev_path = prev;
-				}
-				if (!created) break;
-				next_path = path;
-				fid = -1;
 			}
 		}
 	}
+	for (t = 0; t < T; ++t) {
+		item = &seq->items[t];
+		item->preprocessed_data = malloc(sizeof(crfvo_preprocessed_data_t));
+		trie_get_preprocessed_data(&trie_array[t], &trie_array[t-1], item->preprocessed_data);
+		item->preprocessed_data_delete_func = crfvopd_delete;
+	}
 
-	free(trie_array);
+	free(trie_array_orig);
 }
