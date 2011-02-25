@@ -331,6 +331,7 @@ typedef struct tag_buffer_manager buffer_manager_t;
 
 struct tag_crfvopp {
 	buffer_manager_t* path_manager;
+	buffer_manager_t* node_manager;
 	buffer_manager_t* fid_list_manager;
 };
 

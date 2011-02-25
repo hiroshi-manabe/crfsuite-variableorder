@@ -37,6 +37,11 @@
 #include <crfsuite.h>
 #include "crfvo.h"
 
+#define    FEATURE(trainer, k) \
+    (&(trainer)->features[(k)])
+#define    ATTRIBUTE(trainer, a) \
+    (&(trainer)->attributes[(a)])
+
 struct tag_buffer_manager;
 typedef struct tag_buffer_manager buffer_manager_t;
 
@@ -67,16 +72,19 @@ struct tag_buffer_manager
 	void* buffer;
 	int unit_size;
 	int buffer_max;
-	int buffer_size;
+	int buffer_used;
 };
 
-void buf_init(buffer_manager_t* manager, int unit_size, int initial_buffer_max)
+void* buf_init(buffer_manager_t* manager, int unit_size, int initial_buffer_max)
 {
 	manager->unit_size = unit_size;
 	manager->buffer_max = initial_buffer_max;
+	manager->buffer_used = 0;
 	manager->buffer = malloc(unit_size * initial_buffer_max);
-	memset(manager->buffer, 0, unit_size * initial_buffer_max);
-	manager->buffer_size = 0;
+	if (manager->buffer) {
+		memset(manager->buffer, 0, unit_size * initial_buffer_max);
+	}
+	return manager->buffer;
 }
 
 void* buf_from_index(buffer_manager_t* manager, int index)
@@ -87,28 +95,28 @@ void* buf_from_index(buffer_manager_t* manager, int index)
 int buf_get_new_index(buffer_manager_t* manager, int count)
 {
 	int ret;
-	while (manager->buffer_max < manager->buffer_size + count) {
+	while (manager->buffer_max < manager->buffer_used + count) {
 		void* temp = realloc(manager->buffer, manager->buffer_max * 2 * manager->unit_size);
 		if (!temp) return -1;
 		manager->buffer = temp;
 		manager->buffer_max *= 2;
-		memset((char*)manager->buffer + manager->unit_size * manager->buffer_size, 0,
-			manager->unit_size * (manager->buffer_max - manager->buffer_size));
+		memset((char*)manager->buffer + manager->unit_size * manager->buffer_used, 0,
+			manager->unit_size * (manager->buffer_max - manager->buffer_used));
 	}
-	ret = manager->buffer_size;
-	manager->buffer_size += count;
+	ret = manager->buffer_used;
+	manager->buffer_used += count;
 	return ret;
 }
 
 int buf_get_current_index(buffer_manager_t* manager)
 {
-	return manager->buffer_size;
+	return manager->buffer_used;
 }
 
 void buf_clear(buffer_manager_t* manager)
 {
-	memset(manager->buffer, 0, manager->unit_size * manager->buffer_size);
-	manager->buffer_size = 0;
+	memset(manager->buffer, 0, manager->unit_size * manager->buffer_used);
+	manager->buffer_used = 0;
 }
 
 void buf_delete(buffer_manager_t* manager)
@@ -145,20 +153,21 @@ typedef struct {
 } trie_t;
 
 #define INVALID (-1)
+#define EMPTY (0)
 #define IS_VALID(x) (x != -1)
 
-#define NODE(trie, node) ((trie_node_t*)buf_from_index(trie->node_manager, node))
-#define GET_PATH(trie, node) (NODE(trie, node)->path_plus_1 - 1)
-#define ASSIGN_PATH(trie, node) { if (!IS_VALID(GET_PATH(trie, node))) { NODE(trie, node)->path_plus_1 = buf_get_new_index(trie->path_manager, 1) + 1;  trie->path_count++; } }
-#define GET_CHILD(trie, node, child_index) (NODE(trie, node)->children_plus_1 - 1 + child_index)
-#define CREATE_CHILDREN(trie, node) (NODE(trie, node)->children_plus_1 = buf_get_new_index(trie->node_manager, trie->label_number))
-#define HAS_CHILDREN(trie, node) (NODE(trie, node)->children_plus_1 != 0)
+#define NODE(trie, node) ((trie_node_t*)buf_from_index((trie)->node_manager, (node)))
+#define GET_PATH(trie, node) (NODE((trie), (node))->path_plus_1 - 1)
+#define ASSIGN_PATH(trie, node) { if (!IS_VALID(GET_PATH((trie), (node)))) { NODE((trie), (node))->path_plus_1 = buf_get_new_index((trie)->path_manager, 1) + 1;  (trie)->path_count++; } }
+#define GET_CHILD(trie, node, child_index) (NODE((trie), (node))->children_plus_1 - 1 + child_index)
+#define CREATE_CHILDREN(trie, node) (NODE((trie), (node))->children_plus_1 = buf_get_new_index((trie)->node_manager, (trie)->label_number))
+#define HAS_CHILDREN(trie, node) (NODE((trie), (node))->children_plus_1 != 0)
 
-#define PATH(trie, path) ((path_t*)buf_from_index(trie->path_manager, path))
-#define CREATE_PATH(trie) (buf_get_new_index(trie->path_manager, 1))
+#define PATH(trie, path) ((path_t*)buf_from_index((trie)->path_manager, (path)))
+#define CREATE_PATH(trie) (buf_get_new_index((trie)->path_manager, 1))
 
-#define FID_LIST(trie, fid_list) ((fid_list_t*)buf_from_index(trie->path_manager, fid_list))
-#define APPEND(trie, fid_list, fid) { int new_fid_list = buf_get_new_index(trie->fid_list_manager, 1); FID_LIST(trie, new_fid_list)->next = fid_list; FID_LIST(trie, new_fid_list)->fid = fid; fid_list = new_fid_list; }
+#define FID_LIST(trie, fid_list) ((fid_list_t*)buf_from_index((trie)->path_manager, (fid_list)))
+#define APPEND(trie, fid_list, fid) { int new_fid_list = buf_get_new_index((trie)->fid_list_manager, 1); FID_LIST((trie), new_fid_list)->next = (fid_list); FID_LIST((trie), new_fid_list)->fid = fid; (fid_list) = new_fid_list; }
 
 void trie_init(
 	trie_t* trie,
@@ -177,7 +186,7 @@ void trie_init(
 	trie->fid_count = 0;
 }
 
-void trie_insert_path(trie_t* trie, crfvol_feature_t* f, int fid)
+int trie_set_feature(trie_t* trie, crfvol_feature_t* f, int fid, int* created)
 {
 	int i;
 	int node = trie->root;
@@ -190,12 +199,22 @@ void trie_insert_path(trie_t* trie, crfvol_feature_t* f, int fid)
 		node = GET_CHILD(trie, node, f->label_sequence[i]);
 	}
 	
-	ASSIGN_PATH(trie, node);
 	path = GET_PATH(trie, node);
+
+	if (IS_VALID(path)) {
+		*created = 0;
+	} else {
+		*created = 1;
+		ASSIGN_PATH(trie, node);
+		path = GET_PATH(trie, node);
+	}
+
 	if (IS_VALID(fid)) {
 		int fid_list = PATH(trie, path)->fid_list;
 		APPEND(trie, fid_list, fid);
 	}
+
+	return path;
 }
 
 int trie_get_longest_match_path_index(trie_t* trie, uint8_t* label_sequence, int label_sequence_len)
@@ -294,10 +313,103 @@ void trie_get_preprocessed_data(trie_t* trie, trie_t* prev_trie, crfvo_preproces
 void crfvopp_new(crfvopp_t* pp)
 {
 	pp->path_manager = (buffer_manager_t*)malloc(sizeof(buffer_manager_t));
+	pp->node_manager = (buffer_manager_t*)malloc(sizeof(buffer_manager_t));
+	pp->fid_list_manager = (buffer_manager_t*)malloc(sizeof(buffer_manager_t));
+	if (pp->path_manager && pp->node_manager && pp->fid_list_manager) {
+		buf_init(pp->path_manager, sizeof(path_t), 65536);
+		buf_init(pp->node_manager, sizeof(trie_node_t), 65536);
+		buf_init(pp->fid_list_manager, sizeof(fid_list_t), 65536);
+	}
 }
 
 void crfvopp_delete(crfvopp_t* pp)
 {
-	buf_delete(pp->path_manager);
+	if (pp->path_manager) buf_delete(pp->path_manager);
+	if (pp->node_manager) buf_delete(pp->node_manager);
+	if (pp->fid_list_manager) buf_delete(pp->fid_list_manager);
+	free(pp->path_manager);
+	free(pp->node_manager);
+	free(pp->fid_list_manager);
+	pp->path_manager = pp->node_manager = pp->fid_list_manager = 0;
 }
 
+void crfvopp_preprocess(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_t* seq)
+{
+    const int T = seq->num_items;
+    const int L = trainer->num_labels;
+	int i, j, l, r, t;
+	crf_item_t* item;
+    crfvol_feature_t* f;
+	trie_t* trie_array;
+
+	trie_array = malloc(sizeof(trie_t) * (T + 1));
+	trie_array++;
+
+
+	for (t = -1; t < T; ++t) { // -1: BOS
+		int created;
+		crfvol_feature_t feature;
+		f = &feature;
+
+		trie_init(&trie_array[t], L, pp->node_manager, pp->path_manager, pp->fid_list_manager);
+
+		f->order = 0;
+		trie_set_feature(&trie_array[t], f, INVALID, &created);
+
+		if (t == -1 || t == T-1) { // BOS or EOS
+			f->label_sequence[0] = L;
+			f->order = 1;
+			trie_set_feature(&trie_array[t], f, INVALID, &created);
+		} else {
+			for (l = 0; l < L; ++l) {
+				f->label_sequence[0] = l;
+				f->order = 1;
+				trie_set_feature(&trie_array[t], f, INVALID, &created);
+			}
+		}
+		if (t == -1) continue; // BOS
+	}
+
+    item = &seq->items[t];
+	
+	for (i = 0; i < item->num_contents; ++i) {
+		int a = item->contents[i].aid;
+		const feature_refs_t* attr = ATTRIBUTE(trainer, a);
+
+		/* Loop over features for the attribute. */
+		for (r = 0; r < attr->num_features; ++r) {
+			int next_path;
+			int fid;
+
+			fid = attr->fids[r];
+			f = FEATURE(trainer, fid);
+			if (
+				(f->order > t+1 && !(f->order == t+2 && f->label_sequence[f->order-1] == L)) ||
+				(f->label_sequence[f->order-1] == L && t != f->order-2 && f->order > 1) ||
+				(t == T-1 && f->label_sequence[0] != L) ||
+				(t != T-1 && f->label_sequence[0] == L)
+				) continue;
+
+			next_path = INVALID;
+			for (j = 0; j < f->order; ++j) {
+				int created;
+				int path;
+
+				path = trie_set_feature(&trie_array[t], f, fid, &created);
+
+				if (IS_VALID(next_path)) {
+					PATH(&trie_array[t-j+1], next_path)->prev_path = path;
+				}
+				if (j == f->order-1) {
+					int prev = (t-j == -1) ? INVALID : EMPTY;
+					PATH(&trie_array[t-j], path)->prev_path = prev;
+				}
+				if (!created) break;
+				next_path = path;
+				fid = -1;
+			}
+		}
+	}
+
+	free(trie_array);
+}
