@@ -717,6 +717,7 @@ void crfvol_delete(crfvol_t* trainer)
 		}
 		free(trainer->preprocessor);
     }
+	free(trainer);
 }
 
 int crf_train_tag(crf_tagger_t* tagger, crf_sequence_t *inst, crf_output_t* output)

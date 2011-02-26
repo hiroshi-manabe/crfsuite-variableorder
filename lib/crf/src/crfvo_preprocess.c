@@ -80,10 +80,7 @@ void* buf_init(buffer_manager_t* manager, int unit_size, int initial_buffer_max)
 	manager->unit_size = unit_size;
 	manager->buffer_max = initial_buffer_max;
 	manager->buffer_used = 0;
-	manager->buffer = malloc(unit_size * initial_buffer_max);
-	if (manager->buffer) {
-		memset(manager->buffer, 0, unit_size * initial_buffer_max);
-	}
+	manager->buffer = calloc(unit_size, initial_buffer_max);
 	return manager->buffer;
 }
 
@@ -158,12 +155,12 @@ typedef struct {
 
 #define NODE(trie, node) ((trie_node_t*)buf_from_index((trie)->node_manager, (node)))
 #define PATH(trie, path) ((path_t*)buf_from_index((trie)->path_manager, (path)))
-#define FID_LIST(trie, fid_list) ((fid_list_t*)buf_from_index((trie)->path_manager, (fid_list)))
+#define FID_LIST(trie, fid_list) ((fid_list_t*)buf_from_index((trie)->fid_list_manager, (fid_list)))
 
 #define GET_PATH(trie, node) (NODE((trie), (node))->path_plus_1 - 1)
 #define ASSIGN_PATH(trie, node) { if (!IS_VALID(GET_PATH((trie), (node)))) { NODE((trie), (node))->path_plus_1 = buf_get_new_index((trie)->path_manager, 1) + 1; PATH(trie, GET_PATH(trie, node))->fid_list = INVALID; (trie)->path_count++; } }
 #define GET_CHILD(trie, node, child_index) (NODE((trie), (node))->children_plus_1 - 1 + child_index)
-#define CREATE_CHILDREN(trie, node) (NODE((trie), (node))->children_plus_1 = buf_get_new_index((trie)->node_manager, (trie)->label_number))
+#define CREATE_CHILDREN(trie, node) (NODE((trie), (node))->children_plus_1 = buf_get_new_index((trie)->node_manager, (trie)->label_number) + 1)
 #define HAS_CHILDREN(trie, node) (NODE((trie), (node))->children_plus_1 != 0)
 
 #define CREATE_PATH(trie) (buf_get_new_index((trie)->path_manager, 1))
@@ -213,6 +210,17 @@ int trie_set_feature(trie_t* trie, crfvol_feature_t* f, int fid, int* created)
 	if (IS_VALID(fid)) {
 		int fid_list = PATH(trie, path)->fid_list;
 		APPEND(trie, fid_list, fid);
+/*
+		{
+			int new_fid_list = buf_get_new_index((trie)->fid_list_manager, 1);
+//			((fid_list_t*)buf_from_index((trie)->fid_list_manager, (fid_list)))->next = (fid_list);
+			FID_LIST((trie), new_fid_list)->next = (fid_list);
+//			((fid_list_t*)buf_from_index((trie)->fid_list_manager, (fid_list)))->fid = fid;
+			FID_LIST((trie), new_fid_list)->fid = fid;
+			(fid_list) = new_fid_list;
+		}
+*/
+		trie->fid_count++;
 	}
 
 	return path;
@@ -251,8 +259,8 @@ void trie_get_preprocessed_data_(int node, int valid_parent_index, recursion_dat
 {
 	int path = GET_PATH(r->trie, node);
 	if (IS_VALID(path)) {
-		int prev_path = PATH(r->trie, node)->prev_path;
-		int fid_list = PATH(r->trie, node)->fid_list;
+		int prev_path = PATH(r->trie, path)->prev_path;
+		int fid_list = PATH(r->trie, path)->fid_list;
 
 		r->preprocessed_data->paths[r->cur_path_index].longest_suffix_index = valid_parent_index;
 		r->preprocessed_data->paths[r->cur_path_index].prev_path_index = PATH(r->prev_trie, prev_path)->index;
@@ -274,7 +282,7 @@ void trie_get_preprocessed_data_(int node, int valid_parent_index, recursion_dat
 	}
 }
 
-void trie_get_preprocessed_data(trie_t* trie, trie_t* prev_trie, crfvo_preprocessed_data_t* preprocessed_data)
+void trie_get_preprocessed_data(trie_t* trie, trie_t* prev_trie, crfvo_preprocessed_data_t** preprocessed_data_p)
 {
 	int i;
 	int root = trie->root;
@@ -283,11 +291,9 @@ void trie_get_preprocessed_data(trie_t* trie, trie_t* prev_trie, crfvo_preproces
 	int valid_parent_index = 0;
 	int prev_index_by_label;
 	recursion_data_t r;
+	crfvo_preprocessed_data_t* preprocessed_data;
 	
-	preprocessed_data->num_paths = trie->path_count;
-	preprocessed_data->paths = (crfvo_path_t*)malloc(trie->path_count * sizeof(crfvo_path_t));
-	preprocessed_data->num_fids = trie->fid_count;
-	preprocessed_data->fids = (int*)malloc(trie->fid_count * sizeof(int));
+	preprocessed_data = crfvopd_new(trie->label_number, trie->path_count, trie->fid_count);
 
 	/* empty path */
 	preprocessed_data->paths[cur_path_index].feature_count = 0;
@@ -309,6 +315,8 @@ void trie_get_preprocessed_data(trie_t* trie, trie_t* prev_trie, crfvo_preproces
 		preprocessed_data->num_paths_by_label[i] = r.cur_path_index - prev_index_by_label;
 		prev_index_by_label = r.cur_path_index;
 	}
+
+	*preprocessed_data_p = preprocessed_data;
 }
 
 void crfvopp_new(crfvopp_t* pp)
@@ -413,10 +421,13 @@ void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_
 	}
 	for (t = 0; t < T; ++t) {
 		item = &seq->items[t];
-		item->preprocessed_data = malloc(sizeof(crfvo_preprocessed_data_t));
-		trie_get_preprocessed_data(&trie_array[t], &trie_array[t-1], item->preprocessed_data);
+		trie_get_preprocessed_data(&trie_array[t], &trie_array[t-1], &((crfvo_preprocessed_data_t*)item->preprocessed_data));
 		item->preprocessed_data_delete_func = crfvopd_delete;
 	}
+
+	buf_clear(pp->node_manager);
+	buf_clear(pp->path_manager);
+	buf_clear(pp->fid_list_manager);
 
 	free(trie_array_orig);
 }
