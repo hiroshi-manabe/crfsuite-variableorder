@@ -208,8 +208,7 @@ int trie_set_feature(trie_t* trie, crfvol_feature_t* f, int fid, int* created)
 	}
 
 	if (IS_VALID(fid)) {
-		int fid_list = PATH(trie, path)->fid_list;
-		APPEND(trie, fid_list, fid);
+		APPEND(trie, PATH(trie, path)->fid_list, fid);
 /*
 		{
 			int new_fid_list = buf_get_new_index((trie)->fid_list_manager, 1);
