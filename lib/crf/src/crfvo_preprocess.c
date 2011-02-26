@@ -270,6 +270,7 @@ void trie_get_preprocessed_data_(
 		r->preprocessed_data->paths[r->cur_path_index].prev_path_index =
 			IS_VALID(prev_path) ? PATH(r->prev_trie, prev_path)->index : INVALID;
 		valid_parent_index = r->cur_path_index;
+		r->preprocessed_data->paths[r->cur_path_index].feature_count = 0;
 
 		while (IS_VALID(fid_list)) {
 			r->preprocessed_data->fids[r->cur_fid_index] = FID_LIST(r->trie, fid_list)->fid;
