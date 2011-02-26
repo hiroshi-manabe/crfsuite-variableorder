@@ -255,7 +255,11 @@ typedef struct {
 	crfvo_preprocessed_data_t* preprocessed_data;
 } recursion_data_t;
 
-void trie_get_preprocessed_data_(int node, int valid_parent_index, recursion_data_t* r)
+void trie_get_preprocessed_data_(
+	int node,
+	int valid_parent_index,
+	recursion_data_t* r
+	)
 {
 	int path = GET_PATH(r->trie, node);
 	if (IS_VALID(path)) {
@@ -282,7 +286,13 @@ void trie_get_preprocessed_data_(int node, int valid_parent_index, recursion_dat
 	}
 }
 
-void trie_get_preprocessed_data(trie_t* trie, trie_t* prev_trie, crfvo_preprocessed_data_t** preprocessed_data_p)
+void trie_get_preprocessed_data(
+	trie_t* trie,
+	trie_t* prev_trie,
+	crfvo_preprocessed_data_t** preprocessed_data_p,
+	uint8_t* label_sequence,
+	int label_sequence_len
+	)
 {
 	int i;
 	int root = trie->root;
@@ -315,6 +325,8 @@ void trie_get_preprocessed_data(trie_t* trie, trie_t* prev_trie, crfvo_preproces
 		preprocessed_data->num_paths_by_label[i] = r.cur_path_index - prev_index_by_label;
 		prev_index_by_label = r.cur_path_index;
 	}
+
+	preprocessed_data->training_path_index = trie_get_longest_match_path_index(trie, label_sequence, label_sequence_len);
 
 	*preprocessed_data_p = preprocessed_data;
 }
@@ -351,6 +363,7 @@ void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_
     crfvol_feature_t* f;
 	trie_t* trie_array;
 	trie_t* trie_array_orig;
+	uint8_t* label_sequence = malloc(sizeof(uint8_t) * (T+1));
 
 	trie_array_orig = malloc(sizeof(trie_t) * (T + 1));
 	trie_array = trie_array_orig + 1;
@@ -419,9 +432,19 @@ void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_
 			}
 		}
 	}
+
+	label_sequence[T] = L;
 	for (t = 0; t < T; ++t) {
 		item = &seq->items[t];
-		trie_get_preprocessed_data(&trie_array[t], &trie_array[t-1], &((crfvo_preprocessed_data_t*)item->preprocessed_data));
+		label_sequence[T-t-1] = item->label;
+
+		trie_get_preprocessed_data(
+			&trie_array[t],
+			&trie_array[t-1],
+			&((crfvo_preprocessed_data_t*)item->preprocessed_data),
+			&(label_sequence[T-t-1]),
+			t+2
+			);
 		item->preprocessed_data_delete_func = crfvopd_delete;
 	}
 
@@ -430,4 +453,5 @@ void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_
 	buf_clear(pp->fid_list_manager);
 
 	free(trie_array_orig);
+	free(label_sequence);
 }
