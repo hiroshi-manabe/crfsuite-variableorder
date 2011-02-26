@@ -267,7 +267,8 @@ void trie_get_preprocessed_data_(
 		int fid_list = PATH(r->trie, path)->fid_list;
 
 		r->preprocessed_data->paths[r->cur_path_index].longest_suffix_index = valid_parent_index;
-		r->preprocessed_data->paths[r->cur_path_index].prev_path_index = PATH(r->prev_trie, prev_path)->index;
+		r->preprocessed_data->paths[r->cur_path_index].prev_path_index =
+			IS_VALID(prev_path) ? PATH(r->prev_trie, prev_path)->index : INVALID;
 		valid_parent_index = r->cur_path_index;
 
 		while (IS_VALID(fid_list)) {
@@ -365,7 +366,7 @@ void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_
 	trie_t* trie_array_orig;
 	uint8_t* label_sequence = malloc(sizeof(uint8_t) * (T+1));
 
-	trie_array_orig = malloc(sizeof(trie_t) * (T + 1));
+	trie_array_orig = malloc(sizeof(trie_t) * (T+1));
 	trie_array = trie_array_orig + 1;
 
 	for (t = -1; t < T; ++t) { // -1: BOS
@@ -373,7 +374,7 @@ void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_
 		crfvol_feature_t feature;
 		f = &feature;
 
-		trie_init(&trie_array[t], L, pp->node_manager, pp->path_manager, pp->fid_list_manager);
+		trie_init(&trie_array[t], L+1, pp->node_manager, pp->path_manager, pp->fid_list_manager);
 
 		f->order = 0;
 		trie_set_feature(&trie_array[t], f, INVALID, &created);

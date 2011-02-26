@@ -598,7 +598,9 @@ void crfvol_preprocess(
 	crfvopp_new((crfvopp_t*)trainer->preprocessor);
 
 	for (i = 0; i < trainer->num_sequences; ++i) {
-/*		crfvol_preprocess_sequence(trainer, &trainer->seqs[i]); */
+		crf_sequence_t seq;
+		crf_sequence_copy(&seq, &trainer->seqs[i]);
+		crfvol_preprocess_sequence(trainer, &seq);
 		crfvopp_preprocess_sequence((crfvopp_t*)trainer->preprocessor, trainer, &trainer->seqs[i]);
 
 		if (trainer->max_paths < trainer->seqs[i].max_paths) {
