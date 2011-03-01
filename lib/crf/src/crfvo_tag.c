@@ -80,7 +80,7 @@ int crfvot_tag(crfvot_t* crfvot, crf_sequence_t *inst, crf_output_t* output)
 
 	for (i = 0; i < inst->num_items; ++i) {
 		if (inst->items[i].preprocessed_data == 0) {
-			crfvol_preprocess_sequence(crfvot, inst);
+//			crfvopp_preprocess_sequence(crfvot, inst);
 			break;
 		}
 	}

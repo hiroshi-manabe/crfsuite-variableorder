@@ -593,10 +593,6 @@ void crfvol_preprocess(
 	logging(trainer->lg, "Compiling...\n");
 	logging_progress_start(trainer->lg);
 
-	trainer->preprocessor = malloc(sizeof(crfvopp_t));
-	trainer->preprocessor_delete_func = (void (*)(void*))crfvopp_delete;
-	crfvopp_new((crfvopp_t*)trainer->preprocessor);
-
 	for (i = 0; i < trainer->num_sequences; ++i) {
 		crfvopp_preprocess_sequence((crfvopp_t*)trainer->preprocessor, trainer, &trainer->seqs[i]);
 
@@ -606,7 +602,6 @@ void crfvol_preprocess(
 		logging_progress(trainer->lg, (100 * i) / trainer->num_sequences);
 	}
 
-	trainer->preprocessor_delete_func(trainer->preprocessor);
 	logging_progress_end(trainer->lg);
 }
 
@@ -731,7 +726,7 @@ int crf_train_tag(crf_tagger_t* tagger, crf_sequence_t *inst, crf_output_t* outp
 
 	for (i = 0; i < inst->num_items; ++i) {
 		if (inst->items[i].preprocessed_data == 0) {
-			crfvol_preprocess_sequence((crfvol_t*)tagger->internal, inst);
+			crfvopp_preprocess_sequence((crfvopp_t*)((crfvol_t*)tagger->internal)->preprocessor, (crfvol_t*)tagger->internal, inst);
 			break;
 		}
 	}
@@ -822,6 +817,10 @@ static int crf_train_train(
     crfvot->num_labels = num_labels;
     crfvot->num_sequences = num_instances;
     crfvot->seqs = seqs;
+
+	crfvot->preprocessor = malloc(sizeof(crfvopp_t));
+	crfvot->preprocessor_delete_func = (void (*)(void*))crfvopp_delete;
+	crfvopp_new((crfvopp_t*)crfvot->preprocessor);
 
 	// preprocess
 	crfvol_preprocess(crfvot);
@@ -1007,6 +1006,11 @@ static int crf_train_release(crf_trainer_t* trainer)
 {
     int count = crf_interlocked_decrement(&trainer->nref);
     if (count == 0) {
+		crfvol_t* crfvot = (crfvol_t*)trainer->internal;
+		if (crfvot->preprocessor) {
+			crfvot->preprocessor_delete_func(crfvot->preprocessor);
+			free(crfvot->preprocessor);
+		}
     }
     return count;
 }

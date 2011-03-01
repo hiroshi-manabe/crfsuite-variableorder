@@ -308,7 +308,6 @@ void crfvol_preprocess(crfvol_t* trainer);
 void crfvol_enum_features(crfvol_t* trainer, const crf_sequence_t* seq, update_feature_t func, double* logp);
 void crfvol_shuffle(int *perm, int N, int init);
 void crfvol_set_context(crfvol_t* trainer, const crf_sequence_t* seq);
-void crfvol_preprocess_sequence(crfvol_t* trainer, crf_sequence_t* seq);
 
 /* crfvo_learn_lbfgs.c */
 int crfvol_lbfgs(crfvol_t* crfvot, crfvol_option_t *opt);
