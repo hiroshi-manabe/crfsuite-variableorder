@@ -30,10 +30,6 @@
 
 /* $Id: crfvo_learn.c 176 2010-07-14 09:31:04Z naoaki $ */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifdef    HAVE_CONFIG_H
 #include <config.h>
 #endif/*HAVE_CONFIG_H*/
@@ -70,10 +66,10 @@ void crfvol_set_context(crfvol_t* trainer, const crf_sequence_t* seq)
     ctx->num_items = T;
 
     for (t = 0; t < T; ++t) {
-		crfvo_preprocessed_data_t* preprocessed_data;
+		crfvopd_t* preprocessed_data;
         item = &seq->items[t];
         ctx->labels[t] = item->label;
-		preprocessed_data = (crfvo_preprocessed_data_t*)item->preprocessed_data;
+		preprocessed_data = (crfvopd_t*)item->preprocessed_data;
 		memset(ctx->path_scores[t], 0, sizeof(crfvo_path_score_t) * preprocessed_data->num_paths);
 		for (i = 0; i < preprocessed_data->num_paths; ++i) {
 			ctx->path_scores[t][i].path = preprocessed_data->paths[i];
@@ -256,7 +252,7 @@ int crfvol_set_feature_freqs(
 		crf_sequence_t* seq = &trainer->seqs[i];
 		for (t = 0; t < seq->num_items; ++t) {
 			crf_item_t* item = &seq->items[t];
-			crfvo_preprocessed_data_t* preprocessed_data = (crfvo_preprocessed_data_t*)item->preprocessed_data;
+			crfvopd_t* preprocessed_data = (crfvopd_t*)item->preprocessed_data;
 			int feature_last_index = 0;
 			for (n = 0; n < preprocessed_data->num_paths; ++n) {
 				feature_last_index += preprocessed_data->paths[n].feature_count;
@@ -293,10 +289,6 @@ static int crfvol_exchange_options(crf_params_t* params, crfvol_option_t* opt, i
         DDX_PARAM_FLOAT(
             "feature.minfreq", opt->feature_minfreq, 0.0,
             "The minimum frequency of features."
-            )
-        DDX_PARAM_INT(
-            "feature.emulate_crfvo", opt->feature_emulate_crfvo, 0,
-            "Emulate First-order CRF."
             )
     END_PARAM_MAP()
 
@@ -433,14 +425,12 @@ static int crf_train_train(
     /* Generate features. */
     logging(crfvot->lg, "Feature generation\n");
     logging(crfvot->lg, "feature.minfreq: %f\n", opt->feature_minfreq);
-    logging(crfvot->lg, "feature.emulate_crfvo: %d\n", opt->feature_emulate_crfvo);
     crfvot->clk_begin = clock();
     features = crfvol_generate_features(
         seqs,
         num_instances,
         num_labels,
         num_attributes,
-		opt->feature_emulate_crfvo, // emulate crfvo
         opt->feature_minfreq,
         crfvot->lg->func,
         crfvot->lg->instance
@@ -460,7 +450,7 @@ static int crf_train_train(
 	crfvot->preprocessor_delete_func = (void (*)(void*))crfvopp_delete;
 	crfvopp_new((crfvopp_t*)crfvot->preprocessor);
 
-	// preprocess
+	/* preprocess */
 	crfvol_preprocess(crfvot);
 	crfvol_set_feature_freqs(crfvot, features);
 
@@ -685,6 +675,3 @@ int crfvol_create_instance(const char *interface, void **ptr)
         return 1;
     }
 }
-#ifdef __cplusplus
-} // extern "C"
-#endif

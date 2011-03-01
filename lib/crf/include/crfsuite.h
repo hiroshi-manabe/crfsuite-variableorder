@@ -40,8 +40,6 @@ extern "C" {
 #include <stdio.h>
 #include <stdarg.h>
 
-//#define TEST
-
 /* Forward declarations */
 struct tag_crf_model;
 typedef struct tag_crf_model crf_model_t;

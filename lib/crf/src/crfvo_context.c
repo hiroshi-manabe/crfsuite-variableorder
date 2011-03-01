@@ -30,10 +30,6 @@
 
 /* $Id: crfvo_context.c 176 2010-07-14 09:31:04Z naoaki $ */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifdef    HAVE_CONFIG_H
 #include <config.h>
 #endif/*HAVE_CONFIG_H*/
@@ -297,7 +293,7 @@ void crfvoc_set_weight(
 		int n = ctx->num_paths[t];
 		int fid_index = 0;
 
-		// accumulate weight
+		/* accumulate weight */
 		path_scores[0].exp_weight = 1.0;
 		for (i = 1; i < n; ++i) {
 			int feature_count = path_scores[i].path.feature_count;
@@ -324,32 +320,32 @@ void crfvoc_accumulate_discount(
 	int exponent_diff = 0;
 	floatval_t real_scale_diff = 1.0;
 
-	prev_temp_scores[0] = 1.0; // gamma for empty path
-	prev_temp_scores[1] = 1.0; // gamma for BOS
+	prev_temp_scores[0] = 1.0; /* gamma for the empty path */
+	prev_temp_scores[1] = 1.0; /* gamma for BOS */
 
 	ctx->exponents[0] = 0;
 
-	// forward
+	/* forward */
 	for (t = 0; t < T; ++t) {
 		crfvo_path_score_t* path_scores = ctx->path_scores[t];
 		int n = ctx->num_paths[t];
 
 		memset(cur_temp_scores, 0, sizeof(floatval_t) * n);
 
-		// forward scores
+		/* forward scores */
 		real_scale_diff = ldexp(1.0, -exponent_diff);
 		for (i = n-1; i > 0; --i) {
 			int longest_suffix_index = path_scores[i].path.longest_suffix_index;
 			int prev_path_index = path_scores[i].path.prev_path_index;
 			floatval_t prev_gamma = prev_temp_scores[prev_path_index] * real_scale_diff;
-			// alpha
+			/* alpha */
 			path_scores[longest_suffix_index].score -= prev_gamma;
 			path_scores[i].score += prev_gamma;
-			// gamma
+			/* gamma */
 			cur_temp_scores[i] += path_scores[i].score * path_scores[i].exp_weight;
 			cur_temp_scores[longest_suffix_index] += cur_temp_scores[i];
 		}
-		path_scores[0].score = 0; // alpha for an empty path is 0
+		path_scores[0].score = 0; /* alpha for an empty path is 0 */
 		frexp(cur_temp_scores[0], &exponent_diff);
 		if (t < T-1) ctx->exponents[t+1] = ctx->exponents[t];
 		ctx->exponents[t+1] += exponent_diff;
@@ -359,34 +355,34 @@ void crfvoc_accumulate_discount(
 	ctx->norm_significand = prev_temp_scores[0] * real_scale_diff;
 	ctx->norm_exponent = ctx->exponents[T-1] + exponent_diff;	
 
-	// backward / accumulate score
+	/* backward / accumulate score */
 	last_n = ctx->num_paths[T-1];
 	memset(cur_temp_scores, 0, sizeof(floatval_t) * last_n);
-	cur_temp_scores[0] = real_scale_diff; // delta for the empty path
+	cur_temp_scores[0] = real_scale_diff; /* delta for the empty path */
 	for (t = T-1; t >= 0; --t) {
 		crfvo_path_score_t* path_scores = ctx->path_scores[t];
 		int n = ctx->num_paths[t];
-		int prev_n = (t > 0) ? ctx->num_paths[t-1] : 2; // 2 paths (empty/BOS) for position 0
+		int prev_n = (t > 0) ? ctx->num_paths[t-1] : 2; /* 2 paths (empty/BOS) for position 0 */
 		memset(prev_temp_scores, 0, sizeof(floatval_t) * prev_n);
 
-		// backward scores
+		/* backward scores */
 		real_scale_diff = ldexp(1.0, (t > 0) ? (ctx->exponents[t-1] - ctx->exponents[t]) : 0);
 		for (i = 1; i < n; ++i) {
 			int longest_suffix_index = path_scores[i].path.longest_suffix_index;
-			// beta
+			/* beta */
 			cur_temp_scores[i] += cur_temp_scores[longest_suffix_index];
 		}
 		cur_temp_scores[0] = 0;
 		for (i = 1; i < n; ++i) {
 			int longest_suffix_index = path_scores[i].path.longest_suffix_index;
 			int prev_path_index = path_scores[i].path.prev_path_index;
-			// beta * W
+			/* beta * W */
 			cur_temp_scores[i] *= path_scores[i].exp_weight;
 
-			// theta (alpha * beta * W)
+			/* theta (alpha * beta * W) */
 			path_scores[i].score *= cur_temp_scores[i];
 
-			// delta
+			/* delta */
 			prev_temp_scores[prev_path_index] +=
 				(cur_temp_scores[i] - 
 				 cur_temp_scores[longest_suffix_index]) * real_scale_diff;
@@ -394,17 +390,13 @@ void crfvoc_accumulate_discount(
 		path_scores[0].score = 0.0;
 		for (i = n-1; i > 0; --i) {
 			int longest_suffix_index = path_scores[i].path.longest_suffix_index;
-			// sigma
+			/* sigma */
 			path_scores[longest_suffix_index].score += path_scores[i].score;
 		}
 		for (i = 1; i < n; ++i) {
-			// normalize
+			/* normalize */
 			path_scores[i].score /= ctx->norm_significand;
 		}
 		memcpy(cur_temp_scores, prev_temp_scores, sizeof(floatval_t) * prev_n);
 	}
 }
-
-#ifdef __cplusplus
-} // extern "C"
-#endif

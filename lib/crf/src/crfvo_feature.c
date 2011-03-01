@@ -30,11 +30,6 @@
 
 /* $Id: crfvo_feature.c 176 2010-07-14 09:31:04Z naoaki $ */
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifdef    HAVE_CONFIG_H
 #include <config.h>
 #endif/*HAVE_CONFIG_H*/
@@ -155,7 +150,6 @@ crfvol_features_t* crfvol_generate_features(
     int num_sequences,
     int num_labels,
     int num_attributes,
-	int emulate_crfvo,
     floatval_t minfreq,
     crf_logging_callback func,
     void *instance
@@ -188,7 +182,7 @@ crfvol_features_t* crfvol_generate_features(
 		const crf_sequence_t* seq = &seqs[s];
 		const int T = seq->num_items;
 		uint8_t* label_sequence = (uint8_t*)malloc((T+1) * sizeof(uint8_t));
-		label_sequence[T] = L; // BOS
+		label_sequence[T] = L; /* BOS */
 
 		for (t = 0; t < T; ++t) {
 			int a;
@@ -227,7 +221,7 @@ crfvol_features_t* crfvol_generate_features(
 				}
 			}
 
-			if (t < T-1) { // t == T-1 : EOS
+			if (t < T-1) { /* t == T-1 : EOS */
 				for (a = 0; a < item->num_contents; ++a) {
 					memset(&f, 0, sizeof(f));
 					f.attr = item->contents[a].aid;
@@ -241,7 +235,7 @@ crfvol_features_t* crfvol_generate_features(
 		free(label_sequence);
 	}
 	for (i = 0; i < L; ++i) {
-		// BOS
+		/* BOS */
 		memset(&f, 0, sizeof(f));
 		f.label_sequence[0] = i;
 		f.label_sequence[1] = L;
@@ -250,7 +244,7 @@ crfvol_features_t* crfvol_generate_features(
 		f.attr = 0;
 		featureset_add(set, &f);
 
-		// EOS
+		/* EOS */
 		memset(&f, 0, sizeof(f));
 		f.label_sequence[0] = L;
 		f.label_sequence[1] = i;
@@ -268,7 +262,3 @@ crfvol_features_t* crfvol_generate_features(
 
     return features;
 }
-
-#ifdef __cplusplus
-} // extern "C"
-#endif

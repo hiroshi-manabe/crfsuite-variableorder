@@ -30,8 +30,8 @@
 
 /* $Id: crfvo.h 168 2010-01-29 05:46:24Z naoaki $ */
 
-#ifndef    __CRF1M_H__
-#define    __CRF1M_H__
+#ifndef    __CRFVO_H__
+#define    __CRFVO_H__
 
 #include <time.h>
 #include <stdint.h>
@@ -52,7 +52,9 @@ typedef struct {
 	int    best_path;
 } crfvo_path_score_t;
 
-// preprocessed data
+/*
+	Preprocessed data.
+*/
 typedef struct {
 	int                num_paths;
 	crfvo_path_t*      paths;
@@ -60,7 +62,7 @@ typedef struct {
 	int                training_path_index;
 	int                num_fids;
 	int*               fids;
-} crfvo_preprocessed_data_t;
+} crfvopd_t;
 
 /**
  * CRF context. 
@@ -91,22 +93,23 @@ typedef struct {
     int *labels;
 
 	int max_paths;
-	crfvo_path_score_t** path_scores; // alpha -> alpha * beta -> sigma
+	crfvo_path_score_t** path_scores; /* alpha -> alpha * beta -> sigma */
 	int*  num_paths;
 	int*  training_path_indexes;
 	int** num_paths_by_label;
 	int** fids_refs;
-	floatval_t* cur_temp_scores;  // beta * W (backward)
-	floatval_t* prev_temp_scores; // gamma (forward) / delta (backward)
+	floatval_t* cur_temp_scores;  /* beta * W (backward) */
+	floatval_t* prev_temp_scores; /* gamma (forward) / delta (backward) */
     /**
      * The normalize factor for the input sequence.
      *    This is equivalent to the total scores of all paths from BOS to
      *    EOS, given an input sequence.
+	 *    norm_significand * 2^(norm_exponent)
      */
     floatval_t norm_significand;
 	int norm_exponent;
 
-	// exponents of scores
+	/* exponents of scores */
     int *exponents;
 
 } crfvo_context_t;
@@ -171,7 +174,6 @@ crfvol_features_t* crfvol_generate_features(
     int num_sequences,
     int num_labels,
     int num_attributes,
-	int emulate_crfvo,
     floatval_t minfreq,
     crf_logging_callback func,
     void *instance
@@ -240,7 +242,6 @@ typedef struct {
 typedef struct {
     char*       algorithm;
     floatval_t    feature_minfreq;
-	int           feature_emulate_crfvo;
 
     crfvol_lbfgs_option_t   lbfgs;
 } crfvol_option_t;
@@ -322,22 +323,20 @@ void crfvot_delete(crfvot_t* crfvot);
 int crfvot_tag(crfvot_t* crfvot, crf_sequence_t *inst, crf_output_t* output);
 
 /* crfvo_preprocess.c */
-crfvo_preprocessed_data_t* crfvopd_new(int L, int num_paths, int num_fids);
-void crfvopd_delete(crfvo_preprocessed_data_t* pp);
+crfvopd_t* crfvopd_new(int L, int num_paths, int num_fids);
+void crfvopd_delete(crfvopd_t* pp);
 
 struct tag_buffer_manager;
 typedef struct tag_buffer_manager buffer_manager_t;
 
-struct tag_crfvopp {
+typedef struct tag_crfvopp {
 	buffer_manager_t* path_manager;
 	buffer_manager_t* node_manager;
 	buffer_manager_t* fid_list_manager;
-};
-
-typedef struct tag_crfvopp crfvopp_t;
+} crfvopp_t;
 
 void crfvopp_new(crfvopp_t* pp);
 void crfvopp_delete(crfvopp_t* pp);
 void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_t* seq);
 
-#endif/*__CRF1M_H__*/
+#endif/*__CRFVO_H__*/

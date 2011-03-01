@@ -45,9 +45,9 @@
 struct tag_buffer_manager;
 typedef struct tag_buffer_manager buffer_manager_t;
 
-crfvo_preprocessed_data_t* crfvopd_new(int L, int num_paths, int num_fids)
+crfvopd_t* crfvopd_new(int L, int num_paths, int num_fids)
 {
-	crfvo_preprocessed_data_t* pd = (crfvo_preprocessed_data_t*)calloc(1, sizeof(crfvo_preprocessed_data_t));	
+	crfvopd_t* pd = (crfvopd_t*)calloc(1, sizeof(crfvopd_t));	
 
 	pd->num_paths = num_paths;
 	pd->num_fids = num_fids;
@@ -57,7 +57,7 @@ crfvo_preprocessed_data_t* crfvopd_new(int L, int num_paths, int num_fids)
 	return pd;
 }
 
-void crfvopd_delete(crfvo_preprocessed_data_t* pd)
+void crfvopd_delete(crfvopd_t* pd)
 {
 	if (pd != NULL) {
 		free(pd->fids);
@@ -241,7 +241,7 @@ typedef struct {
 	trie_t* prev_trie;
 	int cur_path_index;
 	int cur_fid_index;
-	crfvo_preprocessed_data_t* preprocessed_data;
+	crfvopd_t* preprocessed_data;
 } recursion_data_t;
 
 void trie_get_preprocessed_data_(
@@ -282,7 +282,7 @@ void trie_get_preprocessed_data_(
 void trie_get_preprocessed_data(
 	trie_t* trie,
 	trie_t* prev_trie,
-	crfvo_preprocessed_data_t** preprocessed_data_p,
+	crfvopd_t** preprocessed_data_p,
 	uint8_t* label_sequence,
 	int label_sequence_len
 	)
@@ -294,7 +294,7 @@ void trie_get_preprocessed_data(
 	int valid_parent_index = 0;
 	int prev_index_by_label;
 	recursion_data_t r;
-	crfvo_preprocessed_data_t* preprocessed_data;
+	crfvopd_t* preprocessed_data;
 	
 	preprocessed_data = crfvopd_new(trie->label_number, trie->path_count, trie->fid_count);
 
@@ -363,7 +363,7 @@ void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_
 	trie_array = trie_array_orig + 1;
 	seq->max_paths = 0;
 
-	for (t = -1; t < T; ++t) { // -1: BOS
+	for (t = -1; t < T; ++t) { /* -1: BOS */
 		int created;
 		crfvol_feature_t feature;
 		f = &feature;
@@ -373,7 +373,7 @@ void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_
 		f->order = 0;
 		trie_set_feature(&trie_array[t], f, INVALID, &created);
 
-		if (t == -1 || t == T-1) { // BOS or EOS
+		if (t == -1 || t == T-1) { /* BOS or EOS */
 			f->label_sequence[0] = L;
 			f->order = 1;
 			trie_set_feature(&trie_array[t], f, INVALID, &created);
@@ -384,7 +384,7 @@ void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_
 				trie_set_feature(&trie_array[t], f, INVALID, &created);
 			}
 		}
-		if (t == -1) continue; // BOS
+		if (t == -1) continue; /* BOS */
 
 		item = &seq->items[t];
 		
@@ -443,13 +443,13 @@ void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_
 		trie_get_preprocessed_data(
 			&trie_array[t],
 			&trie_array[t-1],
-			&((crfvo_preprocessed_data_t*)item->preprocessed_data),
+			&((crfvopd_t*)item->preprocessed_data),
 			&(label_sequence[T-t-1]),
 			t+2
 			);
 		item->preprocessed_data_delete_func = crfvopd_delete;
-		if (((crfvo_preprocessed_data_t*)item->preprocessed_data)->num_paths > seq->max_paths) {
-			seq->max_paths = ((crfvo_preprocessed_data_t*)item->preprocessed_data)->num_paths;
+		if (((crfvopd_t*)item->preprocessed_data)->num_paths > seq->max_paths) {
+			seq->max_paths = ((crfvopd_t*)item->preprocessed_data)->num_paths;
 		}
 	}
 

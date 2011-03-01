@@ -103,7 +103,7 @@ void read_data(FILE *fpi, FILE *fpo, crf_data_t* data, crf_dictionary_t* attrs, 
         case IWA_ITEM:
             if (lid == -1) {
 				if (!strcmp(token->attr, "__EOS__")) {
-					lid = -2; // EOS : to be overwritten by L
+					lid = -2; /* EOS : to be overwritten by L */
 				} else {
 					lid = labels->get(labels, token->attr);
 				}
@@ -121,7 +121,7 @@ void read_data(FILE *fpi, FILE *fpo, crf_data_t* data, crf_dictionary_t* attrs, 
         case IWA_NONE:
         case IWA_EOF:
             /* Put the training instance. */
-			if (lid != -2) { // EOS
+			if (lid != -2) { /* EOS : to be overwritten by L */
 				*((int*)0) = 0;
 			}
             crf_data_append(data, &inst);
