@@ -70,9 +70,10 @@ void crfvol_set_context(crfvol_t* trainer, const crf_sequence_t* seq)
     ctx->num_items = T;
 
     for (t = 0; t < T; ++t) {
+		crfvo_preprocessed_data_t* preprocessed_data;
         item = &seq->items[t];
         ctx->labels[t] = item->label;
-		crfvo_preprocessed_data_t* preprocessed_data = (crfvo_preprocessed_data_t*)item->preprocessed_data;
+		preprocessed_data = (crfvo_preprocessed_data_t*)item->preprocessed_data;
 		memset(ctx->path_scores[t], 0, sizeof(crfvo_path_score_t) * preprocessed_data->num_paths);
 		for (i = 0; i < preprocessed_data->num_paths; ++i) {
 			ctx->path_scores[t][i].path = preprocessed_data->paths[i];
@@ -89,19 +90,20 @@ void crfvol_enum_features(crfvol_t* trainer, const crf_sequence_t* seq, update_f
     crfvo_context_t* ctx = trainer->ctx;
     const int T = seq->num_items;
     const int L = trainer->num_labels;
+	int i, j, t;
 
-	for (int t = 0; t < T; ++t) {
+	for (t = 0; t < T; ++t) {
 		crfvo_path_score_t* path_scores = ctx->path_scores[t];
 		int* fids = ctx->fids_refs[t];
 		int n = ctx->num_paths[t];
 		int fid_counter = 0;
-		for (int i = 0; i < n; ++i) {
+		for (i = 0; i < n; ++i) {
 			int fid_num = path_scores[i].path.feature_count;
-			for (int j = 0; j < fid_num; ++j) {
+			for (j = 0; j < fid_num; ++j) {
 				floatval_t prob = path_scores[i].score;
 				int fid = fids[fid_counter];
-				fid_counter++;
 				crfvol_feature_t* f = FEATURE(trainer, fid);
+				fid_counter++;
 				func(f, fid, prob, 1.0, trainer, seq, t);				
 			}
 		}
