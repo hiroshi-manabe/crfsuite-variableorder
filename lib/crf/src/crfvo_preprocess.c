@@ -268,6 +268,8 @@ void trie_get_preprocessed_data_(
 		r->preprocessed_data->paths[r->cur_path_index].longest_suffix_index = valid_parent_index;
 		r->preprocessed_data->paths[r->cur_path_index].prev_path_index =
 			IS_VALID(prev_path) ? PATH(r->prev_trie, prev_path)->index : INVALID;
+		PATH(r->trie, path)->index = r->cur_path_index;
+
 		valid_parent_index = r->cur_path_index;
 		r->preprocessed_data->paths[r->cur_path_index].feature_count = 0;
 
@@ -311,6 +313,7 @@ void trie_get_preprocessed_data(
 	preprocessed_data->paths[cur_path_index].longest_suffix_index = INVALID;
 	preprocessed_data->paths[cur_path_index].prev_path_index = INVALID;
 	valid_parent_index = cur_path_index;
+	PATH(trie, 0)->index = cur_path_index;
 	cur_path_index++;
 
 	prev_index_by_label = 1;
@@ -368,6 +371,7 @@ void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_
 
 	trie_array_orig = malloc(sizeof(trie_t) * (T+1));
 	trie_array = trie_array_orig + 1;
+	seq->max_paths = 0;
 
 	for (t = -1; t < T; ++t) { // -1: BOS
 		int created;
@@ -435,6 +439,8 @@ void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_
 	}
 
 	label_sequence[T] = L;
+	PATH(&(trie_array[-1]), GET_PATH(&(trie_array[-1]), trie_array[-1].root))->index = 0;
+	PATH(&(trie_array[-1]), GET_PATH(&(trie_array[-1]), GET_CHILD(&trie_array[-1], trie_array[-1].root, L)))->index = 1;
 	for (t = 0; t < T; ++t) {
 		item = &seq->items[t];
 		label_sequence[T-t-1] = item->label;
@@ -447,6 +453,9 @@ void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_
 			t+2
 			);
 		item->preprocessed_data_delete_func = crfvopd_delete;
+		if (((crfvo_preprocessed_data_t*)item->preprocessed_data)->num_paths > seq->max_paths) {
+			seq->max_paths = ((crfvo_preprocessed_data_t*)item->preprocessed_data)->num_paths;
+		}
 	}
 
 	buf_clear(pp->node_manager);
