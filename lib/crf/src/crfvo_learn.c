@@ -598,7 +598,39 @@ void crfvol_preprocess(
 	crfvopp_new((crfvopp_t*)trainer->preprocessor);
 
 	for (i = 0; i < trainer->num_sequences; ++i) {
+		crf_sequence_t seq;
+		crf_sequence_copy(&seq, &trainer->seqs[i]);
 		crfvopp_preprocess_sequence((crfvopp_t*)trainer->preprocessor, trainer, &trainer->seqs[i]);
+		crfvol_preprocess_sequence(trainer, &seq);
+		for (int j = 0; j < seq.num_items; ++j) {
+			crfvo_preprocessed_data_t* data1 = (crfvo_preprocessed_data_t*)seq.items[j].preprocessed_data;
+			crfvo_preprocessed_data_t* data2 = (crfvo_preprocessed_data_t*)trainer->seqs[i].items[j].preprocessed_data;
+			if (data1->num_fids != data2->num_fids ||
+				data1->num_paths != data2->num_paths ||
+				data1->training_path_index != data2->training_path_index)
+			{
+				// error
+				i--;
+			}
+			for (int k = 0; k < data1->num_fids; ++k) {
+				if (data1->fids[k] != data2->fids[k]) {
+					// error
+					i--;
+				}
+			}
+			for (int k = 0; k < data1->num_paths; ++k) {
+				if (memcmp(&data1->paths[k], &data2->paths[k], sizeof(crfvo_path_t))) {
+					// error
+					i--;
+				}
+			}
+			for (int k = 0; k < trainer->num_labels + 1; ++k) {
+				if (data1->num_paths_by_label[k] != data2->num_paths_by_label[k]) {
+					// error
+					i--;
+				}
+			}
+		}
 
 		if (trainer->max_paths < trainer->seqs[i].max_paths) {
 			trainer->max_paths = trainer->seqs[i].max_paths;
