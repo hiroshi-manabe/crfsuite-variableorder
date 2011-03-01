@@ -420,8 +420,13 @@ void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_
 				for (j = 0; j < f->order; ++j) {
 					int created;
 					int path;
+					crfvol_feature_t f2;
+					
+					f2.attr = f->attr;
+					f2.order = f->order - j;
+					memcpy(f2.label_sequence, f->label_sequence + j, (MAX_ORDER - j) * sizeof(uint8_t));
 
-					path = trie_set_feature(&trie_array[t], f, fid, &created);
+					path = trie_set_feature(&trie_array[t-j], &f2, fid, &created);
 
 					if (IS_VALID(next_path)) {
 						PATH(&trie_array[t-j+1], next_path)->prev_path = path;
