@@ -28,7 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: crf1m_learn_lbfgs.c 176 2010-07-14 09:31:04Z naoaki $ */
+/* $Id: crfvo_learn_lbfgs.c 176 2010-07-14 09:31:04Z naoaki $ */
 
 #ifdef    HAVE_CONFIG_H
 #include <config.h>
@@ -43,7 +43,7 @@
 #include <time.h>
 
 #include <crfsuite.h>
-#include "crf1m.h"
+#include "crfvo.h"
 
 #include "logging.h"
 #include "params.h"
@@ -58,19 +58,19 @@ typedef struct {
     floatval_t* best_w;
 } lbfgs_internal_t;
 
-#define LBFGS_INTERNAL(crf1ml)    ((lbfgs_internal_t*)((crf1ml)->solver_data))
+#define LBFGS_INTERNAL(crfvol)    ((lbfgs_internal_t*)((crfvol)->solver_data))
 
 inline static void update_model_expectations(
-    crf1ml_feature_t* f,
+    crfvol_feature_t* f,
     const int fid,
     floatval_t prob,
     floatval_t scale,
-    crf1ml_t* crf1ml,
+    crfvol_t* crfvol,
     const crf_sequence_t* seq,
     int t
     )
 {
-    lbfgs_internal_t *lbfgsi = LBFGS_INTERNAL(crf1ml);
+    lbfgs_internal_t *lbfgsi = LBFGS_INTERNAL(crfvol);
     lbfgsi->g[fid] += prob * scale;
 }
 
@@ -84,18 +84,18 @@ static lbfgsfloatval_t lbfgs_evaluate(
 {
     int i;
     floatval_t logp = 0, logl = 0, norm = 0;
-    crf1ml_t* crf1mt = (crf1ml_t*)instance;
-    crf_sequence_t* seqs = crf1mt->seqs;
-    const int N = crf1mt->num_sequences;
+    crfvol_t* crfvot = (crfvol_t*)instance;
+    crf_sequence_t* seqs = crfvot->seqs;
+    const int N = crfvot->num_sequences;
 
-	lbfgs_internal_t *lbfgsi = LBFGS_INTERNAL(crf1mt);
+	lbfgs_internal_t *lbfgsi = LBFGS_INTERNAL(crfvot);
 
-	if (!crf1mt->exp_weight) {
-		crf1mt->exp_weight = (floatval_t*)calloc(crf1mt->num_features, sizeof(floatval_t));
+	if (!crfvot->exp_weight) {
+		crfvot->exp_weight = (floatval_t*)calloc(crfvot->num_features, sizeof(floatval_t));
 	}
 
-	for (i = 0; i < crf1mt->num_features; ++i) {
-		crf1mt->exp_weight[i] = exp(x[i]);
+	for (i = 0; i < crfvot->num_features; ++i) {
+		crfvot->exp_weight[i] = exp(x[i]);
 	}
 
     /* Set the gradient vector. */
@@ -105,8 +105,8 @@ static lbfgsfloatval_t lbfgs_evaluate(
         Set feature weights from the L-BFGS solver. Initialize model
         expectations as zero.
      */
-    for (i = 0;i < crf1mt->num_features;++i) {
-        crf1ml_feature_t* f = &crf1mt->features[i];
+    for (i = 0;i < crfvot->num_features;++i) {
+        crfvol_feature_t* f = &crfvot->features[i];
         g[i] = -f->freq;
     }
 
@@ -115,21 +115,21 @@ static lbfgsfloatval_t lbfgs_evaluate(
      */
     for (i = 0;i < N;++i) {
         /* Set label sequences and state scores. */
-        crf1ml_set_context(crf1mt, &seqs[i]);
+        crfvol_set_context(crfvot, &seqs[i]);
 
-		/*crf1mc_debug_context(crf1mt->ctx, stdout);*/
-        /*printf("lognorm = %f\n", crf1mt->ctx->log_norm);*/
+		/*crfvoc_debug_context(crfvot->ctx, stdout);*/
+        /*printf("lognorm = %f\n", crfvot->ctx->log_norm);*/
 
-        crf1mc_set_weight(crf1mt->ctx, crf1mt->exp_weight);
-        crf1mc_accumulate_discount(crf1mt->ctx);
+        crfvoc_set_weight(crfvot->ctx, crfvot->exp_weight);
+        crfvoc_accumulate_discount(crfvot->ctx);
 
         /* Compute the probability of the input sequence on the model. */
-        logp = crf1mc_logprob(crf1mt->ctx);
+        logp = crfvoc_logprob(crfvot->ctx);
         /* Update the log-likelihood. */
         logl += logp;
 
         /* Update the model expectations of features. */
-        crf1ml_enum_features(crf1mt, &seqs[i], update_model_expectations, &logp);
+        crfvol_enum_features(crfvot, &seqs[i], update_model_expectations, &logp);
     }
 
     /*
@@ -137,8 +137,8 @@ static lbfgsfloatval_t lbfgs_evaluate(
         Note that we *add* the (w * sigma) to g[i].
      */
     if (lbfgsi->l2_regularization) {
-        for (i = 0;i < crf1mt->num_features;++i) {
-            const crf1ml_feature_t* f = &crf1mt->features[i];
+        for (i = 0;i < crfvot->num_features;++i) {
+            const crfvol_feature_t* f = &crfvot->features[i];
             g[i] += (lbfgsi->sigma2inv * x[i]);
             norm += x[i] * x[i];
         }
@@ -162,43 +162,43 @@ static int lbfgs_progress(
 {
     int i, num_active_features = 0;
     clock_t duration, clk = clock();
-    crf1ml_t* crf1mt = (crf1ml_t*)instance;
-    lbfgs_internal_t *lbfgsi = LBFGS_INTERNAL(crf1mt);
+    crfvol_t* crfvot = (crfvol_t*)instance;
+    lbfgs_internal_t *lbfgsi = LBFGS_INTERNAL(crfvot);
 
     /* Compute the duration required for this iteration. */
-    duration = clk - crf1mt->clk_prev;
-    crf1mt->clk_prev = clk;
+    duration = clk - crfvot->clk_prev;
+    crfvot->clk_prev = clk;
 
     /* Set feature weights from the L-BFGS solver. */
-    for (i = 0;i < crf1mt->num_features;++i) {
+    for (i = 0;i < crfvot->num_features;++i) {
         lbfgsi->best_w[i] = x[i];
         if (x[i] != 0.) ++num_active_features;
     }
 
     /* Report the progress. */
-    logging(crf1mt->lg, "***** Iteration #%d *****\n", k);
-    logging(crf1mt->lg, "Log-likelihood: %f\n", -fx);
-    logging(crf1mt->lg, "Feature norm: %f\n", xnorm);
-    logging(crf1mt->lg, "Error norm: %f\n", gnorm);
-    logging(crf1mt->lg, "Active features: %d\n", num_active_features);
-    logging(crf1mt->lg, "Line search trials: %d\n", ls);
-    logging(crf1mt->lg, "Line search step: %f\n", step);
-    logging(crf1mt->lg, "Seconds required for this iteration: %.3f\n", duration / (double)CLOCKS_PER_SEC);
+    logging(crfvot->lg, "***** Iteration #%d *****\n", k);
+    logging(crfvot->lg, "Log-likelihood: %f\n", -fx);
+    logging(crfvot->lg, "Feature norm: %f\n", xnorm);
+    logging(crfvot->lg, "Error norm: %f\n", gnorm);
+    logging(crfvot->lg, "Active features: %d\n", num_active_features);
+    logging(crfvot->lg, "Line search trials: %d\n", ls);
+    logging(crfvot->lg, "Line search step: %f\n", step);
+    logging(crfvot->lg, "Seconds required for this iteration: %.3f\n", duration / (double)CLOCKS_PER_SEC);
 
     /* Send the tagger with the current parameters. */
-    if (crf1mt->cbe_proc != NULL) {
+    if (crfvot->cbe_proc != NULL) {
         /* Callback notification with the tagger object. */
-        int ret = crf1mt->cbe_proc(crf1mt->cbe_instance, &crf1mt->tagger);
+        int ret = crfvot->cbe_proc(crfvot->cbe_instance, &crfvot->tagger);
     }
-    logging(crf1mt->lg, "\n");
+    logging(crfvot->lg, "\n");
 
     /* Continue. */
     return 0;
 }
 
-int crf1ml_lbfgs_options(crf_params_t* params, crf1ml_option_t* opt, int mode)
+int crfvol_lbfgs_options(crf_params_t* params, crfvol_option_t* opt, int mode)
 {
-    crf1ml_lbfgs_option_t* lbfgs = &opt->lbfgs;
+    crfvol_lbfgs_option_t* lbfgs = &opt->lbfgs;
 
     BEGIN_PARAM_MAP(params, mode)
         DDX_PARAM_STRING(
@@ -246,19 +246,19 @@ int crf1ml_lbfgs_options(crf_params_t* params, crf1ml_option_t* opt, int mode)
 }
 
 
-int crf1ml_lbfgs(
-    crf1ml_t* crf1mt,
-    crf1ml_option_t *opt
+int crfvol_lbfgs(
+    crfvol_t* crfvot,
+    crfvol_option_t *opt
     )
 {
     int i, ret;
-    const int K = crf1mt->num_features;
+    const int K = crfvot->num_features;
     lbfgs_internal_t lbfgsi;
     lbfgs_parameter_t lbfgsparam;
-    crf1ml_lbfgs_option_t* lbfgsopt = &opt->lbfgs;
+    crfvol_lbfgs_option_t* lbfgsopt = &opt->lbfgs;
 
     /* Set the solver-specific information. */
-    crf1mt->solver_data = &lbfgsi;
+    crfvot->solver_data = &lbfgsi;
 
     /* Allocate an array that stores the best weights. */
     lbfgsi.best_w = (floatval_t*)malloc(sizeof(floatval_t) * K);
@@ -272,17 +272,17 @@ int crf1ml_lbfgs(
     /* Initialize the L-BFGS parameters with default values. */
     lbfgs_parameter_init(&lbfgsparam);
 
-    logging(crf1mt->lg, "L-BFGS optimization\n");
-    logging(crf1mt->lg, "regularization: %s\n", lbfgsopt->regularization);
-    logging(crf1mt->lg, "regularization.sigma: %f\n", lbfgsopt->regularization_sigma);
-    logging(crf1mt->lg, "lbfgs.num_memories: %d\n", lbfgsopt->memory);
-    logging(crf1mt->lg, "lbfgs.max_iterations: %d\n", lbfgsopt->max_iterations);
-    logging(crf1mt->lg, "lbfgs.epsilon: %f\n", lbfgsopt->epsilon);
-    logging(crf1mt->lg, "lbfgs.stop: %d\n", lbfgsopt->stop);
-    logging(crf1mt->lg, "lbfgs.delta: %f\n", lbfgsopt->delta);
-    logging(crf1mt->lg, "lbfgs.linesearch: %s\n", lbfgsopt->linesearch);
-    logging(crf1mt->lg, "lbfgs.linesearch.max_iterations: %d\n", lbfgsopt->linesearch_max_iterations);
-    logging(crf1mt->lg, "\n");
+    logging(crfvot->lg, "L-BFGS optimization\n");
+    logging(crfvot->lg, "regularization: %s\n", lbfgsopt->regularization);
+    logging(crfvot->lg, "regularization.sigma: %f\n", lbfgsopt->regularization_sigma);
+    logging(crfvot->lg, "lbfgs.num_memories: %d\n", lbfgsopt->memory);
+    logging(crfvot->lg, "lbfgs.max_iterations: %d\n", lbfgsopt->max_iterations);
+    logging(crfvot->lg, "lbfgs.epsilon: %f\n", lbfgsopt->epsilon);
+    logging(crfvot->lg, "lbfgs.stop: %d\n", lbfgsopt->stop);
+    logging(crfvot->lg, "lbfgs.delta: %f\n", lbfgsopt->delta);
+    logging(crfvot->lg, "lbfgs.linesearch: %s\n", lbfgsopt->linesearch);
+    logging(crfvot->lg, "lbfgs.linesearch.max_iterations: %d\n", lbfgsopt->linesearch_max_iterations);
+    logging(crfvot->lg, "\n");
 
     /* Set parameters for L-BFGS. */
     lbfgsparam.m = lbfgsopt->memory;
@@ -314,33 +314,33 @@ int crf1ml_lbfgs(
     }
 
     /* Call the L-BFGS solver. */
-    crf1mt->clk_begin = clock();
-    crf1mt->clk_prev = crf1mt->clk_begin;
+    crfvot->clk_begin = clock();
+    crfvot->clk_prev = crfvot->clk_begin;
     ret = lbfgs(
-        crf1mt->num_features,
-        crf1mt->w,
+        crfvot->num_features,
+        crfvot->w,
         NULL,
         lbfgs_evaluate,
         lbfgs_progress,
-        crf1mt,
+        crfvot,
         &lbfgsparam
         );
     if (ret == LBFGS_CONVERGENCE) {
-        logging(crf1mt->lg, "L-BFGS resulted in convergence\n");
+        logging(crfvot->lg, "L-BFGS resulted in convergence\n");
     } else if (ret == LBFGS_STOP) {
-        logging(crf1mt->lg, "L-BFGS terminated with the stopping criteria\n");
+        logging(crfvot->lg, "L-BFGS terminated with the stopping criteria\n");
     } else if (ret == LBFGSERR_MAXIMUMITERATION) {
-        logging(crf1mt->lg, "L-BFGS terminated with the maximum number of iterations\n");
+        logging(crfvot->lg, "L-BFGS terminated with the maximum number of iterations\n");
     } else {
-        logging(crf1mt->lg, "L-BFGS terminated with error code (%d)\n", ret);
+        logging(crfvot->lg, "L-BFGS terminated with error code (%d)\n", ret);
     }
 
     for (i = 0;i < K;++i) {
-        crf1mt->w[i] = lbfgsi.best_w[i];
+        crfvot->w[i] = lbfgsi.best_w[i];
     }
 
-    logging(crf1mt->lg, "Total seconds required for L-BFGS: %.3f\n", (clock() - crf1mt->clk_begin) / (double)CLOCKS_PER_SEC);
-    logging(crf1mt->lg, "\n");
+    logging(crfvot->lg, "Total seconds required for L-BFGS: %.3f\n", (clock() - crfvot->clk_begin) / (double)CLOCKS_PER_SEC);
+    logging(crfvot->lg, "\n");
 
     return 0;
 }

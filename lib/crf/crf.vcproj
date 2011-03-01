@@ -234,83 +234,47 @@
 			Name="Linear chain CRF"
 			>
 			<File
-				RelativePath=".\src\crf1m.c"
+				RelativePath=".\src\crfvo.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\crf1m.h"
+				RelativePath=".\src\crfvo.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\crf1m_context.c"
+				RelativePath=".\src\crfvo_context.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_C|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAs="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\crf1m_feature.c"
+				RelativePath=".\src\crfvo_feature.c"
+				>
+			</File>
+			<File
+				RelativePath=".\src\crfvo_learn.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_C|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAs="0"
+						CompileAs="1"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\crf1m_learn.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_C|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAs="0"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\src\crf1m_learn_lbfgs.c"
+				RelativePath=".\src\crfvo_learn_lbfgs.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\crf1m_model.c"
+				RelativePath=".\src\crfvo_model.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\crf1m_tag.c"
+				RelativePath=".\src\crfvo_preprocess.c"
+				>
+			</File>
+			<File
+				RelativePath=".\src\crfvo_tag.c"
 				>
 			</File>
 			<File

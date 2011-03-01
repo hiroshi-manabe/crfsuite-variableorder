@@ -28,7 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: crf1m.c 176 2010-07-14 09:31:04Z naoaki $ */
+/* $Id: crfvo.c 176 2010-07-14 09:31:04Z naoaki $ */
 
 #ifdef    HAVE_CONFIG_H
 #include <config.h>
@@ -44,18 +44,18 @@
 #include "params.h"
 
 #include "logging.h"
-#include "crf1m.h"
+#include "crfvo.h"
 
-int crf1m_model_create(const char *filename, crf_model_t** ptr_model);
+int crfvo_model_create(const char *filename, crf_model_t** ptr_model);
 
-int crf1m_create_instance_from_file(const char *filename, void **ptr)
+int crfvo_create_instance_from_file(const char *filename, void **ptr)
 {
-    return crf1m_model_create(filename, (crf_model_t**)ptr);
+    return crfvo_model_create(filename, (crf_model_t**)ptr);
 }
 
 
 typedef struct {
-    crf1mm_t*    crf1mm;
+    crfvom_t*    crfvom;
 
     crf_dictionary_t*    attrs;
     crf_dictionary_t*    labels;
@@ -85,22 +85,22 @@ static int model_attrs_get(crf_dictionary_t* dic, const char *str)
 
 static int model_attrs_to_id(crf_dictionary_t* dic, const char *str)
 {
-    crf1mm_t *crf1mm = (crf1mm_t*)dic->internal;
-    return crf1mm_to_aid(crf1mm, str);
+    crfvom_t *crfvom = (crfvom_t*)dic->internal;
+    return crfvom_to_aid(crfvom, str);
 }
 
 static int model_attrs_to_string(crf_dictionary_t* dic, int id, char const **pstr)
 {
-    crf1mm_t *crf1mm = (crf1mm_t*)dic->internal;
-    const char *str = crf1mm_to_attr(crf1mm, id);
+    crfvom_t *crfvom = (crfvom_t*)dic->internal;
+    const char *str = crfvom_to_attr(crfvom, id);
     *pstr = str;
     return 0;
 }
 
 static int model_attrs_num(crf_dictionary_t* dic)
 {
-    crf1mm_t *crf1mm = (crf1mm_t*)dic->internal;
-    return crf1mm_get_num_attrs(crf1mm);
+    crfvom_t *crfvom = (crfvom_t*)dic->internal;
+    return crfvom_get_num_attrs(crfvom);
 }
 
 static void model_attrs_free(crf_dictionary_t* dic, const char *str)
@@ -134,22 +134,22 @@ static int model_labels_get(crf_dictionary_t* dic, const char *str)
 
 static int model_labels_to_id(crf_dictionary_t* dic, const char *str)
 {
-    crf1mm_t *crf1mm = (crf1mm_t*)dic->internal;
-    return crf1mm_to_lid(crf1mm, str);
+    crfvom_t *crfvom = (crfvom_t*)dic->internal;
+    return crfvom_to_lid(crfvom, str);
 }
 
 static int model_labels_to_string(crf_dictionary_t* dic, int id, char const **pstr)
 {
-    crf1mm_t *crf1mm = (crf1mm_t*)dic->internal;
-    const char *str = crf1mm_to_label(crf1mm, id);
+    crfvom_t *crfvom = (crfvom_t*)dic->internal;
+    const char *str = crfvom_to_label(crfvom, id);
     *pstr = str;
     return 0;
 }
 
 static int model_labels_num(crf_dictionary_t* dic)
 {
-    crf1mm_t *crf1mm = (crf1mm_t*)dic->internal;
-    return crf1mm_get_num_labels(crf1mm);
+    crfvom_t *crfvom = (crfvom_t*)dic->internal;
+    return crfvom_get_num_labels(crfvom);
 }
 
 static void model_labels_free(crf_dictionary_t* dic, const char *str)
@@ -172,8 +172,8 @@ static int tagger_release(crf_tagger_t* tagger)
 
 static int tagger_tag(crf_tagger_t* tagger, crf_sequence_t *inst, crf_output_t* output)
 {
-    crf1mt_t* crf1mt = (crf1mt_t*)tagger->internal;
-    crf1mt_tag(crf1mt, inst, output);
+    crfvot_t* crfvot = (crfvot_t*)tagger->internal;
+    crfvot_tag(crfvot, inst, output);
     return 0;
 }
 
@@ -182,7 +182,7 @@ static int tagger_tag(crf_tagger_t* tagger, crf_sequence_t *inst, crf_output_t* 
 
 /*
  *    Implementation of crf_model_t object.
- *    This object is instantiated by crf1m_model_create() function.
+ *    This object is instantiated by crfvo_model_create() function.
  */
 
 static int model_addref(crf_model_t* model)
@@ -196,11 +196,11 @@ static int model_release(crf_model_t* model)
     if (count == 0) {
         /* This instance is being destroyed. */
         model_internal_t* internal = (model_internal_t*)model->internal;
-        crf1mt_delete((crf1mt_t*)internal->tagger->internal);
+        crfvot_delete((crfvot_t*)internal->tagger->internal);
         free(internal->tagger);
         free(internal->labels);
         free(internal->attrs);
-        crf1mm_close(internal->crf1mm);
+        crfvom_close(internal->crfvom);
         free(internal);
         free(model);
     }
@@ -240,15 +240,15 @@ static int model_get_attrs(crf_model_t* model, crf_dictionary_t** ptr_attrs)
 static int model_dump(crf_model_t* model, FILE *fpo)
 {
     model_internal_t* internal = (model_internal_t*)model->internal;
-    crf1mm_dump(internal->crf1mm, fpo);
+    crfvom_dump(internal->crfvom, fpo);
     return 0;
 }
 
-int crf1m_model_create(const char *filename, crf_model_t** ptr_model)
+int crfvo_model_create(const char *filename, crf_model_t** ptr_model)
 {
     int ret = 0;
-    crf1mm_t *crf1mm = NULL;
-    crf1mt_t *crf1mt = NULL;
+    crfvom_t *crfvom = NULL;
+    crfvot_t *crfvot = NULL;
     crf_model_t *model = NULL;
     model_internal_t *internal = NULL;
     crf_tagger_t *tagger = NULL;
@@ -257,15 +257,15 @@ int crf1m_model_create(const char *filename, crf_model_t** ptr_model)
     *ptr_model = NULL;
 
     /* Open the model file. */
-    crf1mm = crf1mm_new(filename);
-    if (crf1mm == NULL) {
+    crfvom = crfvom_new(filename);
+    if (crfvom == NULL) {
         ret = CRFERR_INCOMPATIBLE;
         goto error_exit;
     }
 
     /* Construct a tagger based on the model. */
-    crf1mt = crf1mt_new(crf1mm);
-    if (crf1mt == NULL) {
+    crfvot = crfvot_new(crfvom);
+    if (crfvot == NULL) {
         ret = CRFERR_OUTOFMEMORY;
         goto error_exit;
     }
@@ -283,7 +283,7 @@ int crf1m_model_create(const char *filename, crf_model_t** ptr_model)
         ret = CRFERR_OUTOFMEMORY;
         goto error_exit;
     }
-    attrs->internal = crf1mm;
+    attrs->internal = crfvom;
     attrs->addref = model_attrs_addref;
     attrs->release = model_attrs_release;
     attrs->get = model_attrs_get;
@@ -298,7 +298,7 @@ int crf1m_model_create(const char *filename, crf_model_t** ptr_model)
         ret = CRFERR_OUTOFMEMORY;
         goto error_exit;
     }
-    labels->internal = crf1mm;
+    labels->internal = crfvom;
     labels->addref = model_labels_addref;
     labels->release = model_labels_release;
     labels->get = model_labels_get;
@@ -314,13 +314,13 @@ int crf1m_model_create(const char *filename, crf_model_t** ptr_model)
         ret = CRFERR_OUTOFMEMORY;
         goto error_exit;
     }
-    tagger->internal = crf1mt;
+    tagger->internal = crfvot;
     tagger->addref = tagger_addref;
     tagger->release = tagger_release;
     tagger->tag = tagger_tag;
 
     /* Set the internal data. */
-    internal->crf1mm = crf1mm;
+    internal->crfvom = crfvom;
     internal->attrs = attrs;
     internal->labels = labels;
     internal->tagger = tagger;
@@ -347,8 +347,8 @@ error_exit:
     free(tagger);
     free(labels);
     free(attrs);
-    crf1mt_delete(crf1mt);
-    crf1mm_close(crf1mm);
+    crfvot_delete(crfvot);
+    crfvom_close(crfvom);
     free(internal);
     free(model);
     return ret;

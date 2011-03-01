@@ -39,14 +39,14 @@
 
 #include <crfsuite.h>
 
-int crf1ml_create_instance(const char *iid, void **ptr);
+int crfvol_create_instance(const char *iid, void **ptr);
 int crf_dictionary_create_instance(const char *interface, void **ptr);
-int crf1m_create_instance_from_file(const char *filename, void **ptr);
+int crfvo_create_instance_from_file(const char *filename, void **ptr);
 
 int crf_create_instance(const char *iid, void **ptr)
 {
     int ret = 
-        crf1ml_create_instance(iid, ptr) == 0 ||
+        crfvol_create_instance(iid, ptr) == 0 ||
         crf_dictionary_create_instance(iid, ptr) == 0;
 
     return ret;
@@ -54,7 +54,7 @@ int crf_create_instance(const char *iid, void **ptr)
 
 int crf_create_instance_from_file(const char *filename, void **ptr)
 {
-    int ret = crf1m_create_instance_from_file(filename, ptr);
+    int ret = crfvo_create_instance_from_file(filename, ptr);
     return ret;
 }
 
@@ -379,7 +379,7 @@ int crf_evaluation_accmulate(crf_evaluation_t* eval, const crf_sequence_t* refer
         return 1;
     }
 
-    for (t = 0;t < target->num_labels;++t) {
+    for (t = 0;t < target->num_labels - 1;++t) { /* data set includes EOS, which we are not tagging */
         int lr = reference->items[t].label;
         int lt = target->labels[t];
 
@@ -396,7 +396,7 @@ int crf_evaluation_accmulate(crf_evaluation_t* eval, const crf_sequence_t* refer
         ++eval->item_total_num;
     }
 
-    if (nc == target->num_labels) {
+    if (nc == target->num_labels - 1) { /* data set includes EOS */
         ++eval->inst_total_correct;
     }
     ++eval->inst_total_num;

@@ -234,7 +234,7 @@ int main_learn(int argc, char *argv[], const char *argv0)
     }
 
     /* Create a trainer instance. */
-    ret = crf_create_instance("trainer.crf1m", (void**)&trainer);
+    ret = crf_create_instance("trainer.crfvo", (void**)&trainer);
     if (!ret) {
         fprintf(fpe, "ERROR: Failed to create a trainer instance.\n");
         ret = 1;

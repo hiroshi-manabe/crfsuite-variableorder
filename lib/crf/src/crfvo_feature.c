@@ -28,12 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: crf1m_feature.c 176 2010-07-14 09:31:04Z naoaki $ */
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+/* $Id: crfvo_feature.c 176 2010-07-14 09:31:04Z naoaki $ */
 
 #ifdef    HAVE_CONFIG_H
 #include <config.h>
@@ -48,7 +43,7 @@ extern "C" {
 #include <crfsuite.h>
 
 #include "logging.h"
-#include "crf1m.h"
+#include "crfvo.h"
 #include "rumavl.h"    /* AVL tree library necessary for feature generation. */
 
 /**
@@ -66,8 +61,8 @@ static int featureset_comp(const void *x, const void *y, size_t n, void *udata)
 {
     int ret = 0;
 	int i;
-    const crf1ml_feature_t* f1 = (const crf1ml_feature_t*)x;
-    const crf1ml_feature_t* f2 = (const crf1ml_feature_t*)y;
+    const crfvol_feature_t* f1 = (const crfvol_feature_t*)x;
+    const crfvol_feature_t* f2 = (const crfvol_feature_t*)y;
 
 	ret = COMP(f1->attr, f2->attr);
 	if (ret == 0) {
@@ -89,7 +84,7 @@ static featureset_t* featureset_new()
     if (set != NULL) {
         set->num = 0;
         set->avl = rumavl_new(
-            sizeof(crf1ml_feature_t), featureset_comp, NULL, NULL);
+            sizeof(crfvol_feature_t), featureset_comp, NULL, NULL);
         if (set->avl == NULL) {
             free(set);
             set = NULL;
@@ -106,10 +101,10 @@ static void featureset_delete(featureset_t* set)
     }
 }
 
-static int featureset_add(featureset_t* set, const crf1ml_feature_t* f)
+static int featureset_add(featureset_t* set, const crfvol_feature_t* f)
 {
     /* Check whether if the feature already exists. */
-    crf1ml_feature_t *p = (crf1ml_feature_t*)rumavl_find(set->avl, f);
+    crfvol_feature_t *p = (crfvol_feature_t*)rumavl_find(set->avl, f);
     if (p == NULL) {
         /* Insert the feature to the feature set. */
         rumavl_insert(set->avl, f);
@@ -121,11 +116,11 @@ static int featureset_add(featureset_t* set, const crf1ml_feature_t* f)
     return 0;
 }
 
-static void featureset_generate(crf1ml_features_t* features, featureset_t* set, floatval_t minfreq)
+static void featureset_generate(crfvol_features_t* features, featureset_t* set, floatval_t minfreq)
 {
     int n = 0, k = 0;
     RUMAVL_NODE *node = NULL;
-    crf1ml_feature_t *f = NULL;
+    crfvol_feature_t *f = NULL;
 
     features->features = 0;
 
@@ -137,12 +132,12 @@ static void featureset_generate(crf1ml_features_t* features, featureset_t* set, 
     }
 
     /* The second path: copy the valid features to the feature array. */
-    features->features = (crf1ml_feature_t*)calloc(n, sizeof(crf1ml_feature_t));
+    features->features = (crfvol_feature_t*)calloc(n, sizeof(crfvol_feature_t));
     if (features->features != NULL) {
         node = NULL;
         while ((node = rumavl_node_next(set->avl, node, 1, (void**)&f)) != NULL) {
             if (minfreq <= f->freq) {
-                memcpy(&features->features[k], f, sizeof(crf1ml_feature_t));
+                memcpy(&features->features[k], f, sizeof(crfvol_feature_t));
                 ++k;
             }
         }
@@ -150,21 +145,20 @@ static void featureset_generate(crf1ml_features_t* features, featureset_t* set, 
     }
 }
 
-crf1ml_features_t* crf1ml_generate_features(
+crfvol_features_t* crfvol_generate_features(
     const crf_sequence_t *seqs,
     int num_sequences,
     int num_labels,
     int num_attributes,
-	int emulate_crf1m,
     floatval_t minfreq,
     crf_logging_callback func,
     void *instance
     )
 {
     int i, s, t;
-    crf1ml_feature_t f;
+    crfvol_feature_t f;
     featureset_t* set = NULL;
-    crf1ml_features_t *features = NULL;
+    crfvol_features_t *features = NULL;
     const int N = num_sequences;
     const int L = num_labels;
     logging_t lg;
@@ -174,7 +168,7 @@ crf1ml_features_t* crf1ml_generate_features(
     lg.percent = 0;
 
     /* Allocate a feature container. */
-    features = (crf1ml_features_t*)calloc(1, sizeof(crf1ml_features_t));
+    features = (crfvol_features_t*)calloc(1, sizeof(crfvol_features_t));
 
     /* Create an instance of feature set. */
     set = featureset_new();
@@ -188,7 +182,7 @@ crf1ml_features_t* crf1ml_generate_features(
 		const crf_sequence_t* seq = &seqs[s];
 		const int T = seq->num_items;
 		uint8_t* label_sequence = (uint8_t*)malloc((T+1) * sizeof(uint8_t));
-		label_sequence[T] = L; // BOS
+		label_sequence[T] = L; /* BOS */
 
 		for (t = 0; t < T; ++t) {
 			int a;
@@ -227,7 +221,7 @@ crf1ml_features_t* crf1ml_generate_features(
 				}
 			}
 
-			if (t < T-1) { // t == T-1 : EOS
+			if (t < T-1) { /* t == T-1 : EOS */
 				for (a = 0; a < item->num_contents; ++a) {
 					memset(&f, 0, sizeof(f));
 					f.attr = item->contents[a].aid;
@@ -241,7 +235,7 @@ crf1ml_features_t* crf1ml_generate_features(
 		free(label_sequence);
 	}
 	for (i = 0; i < L; ++i) {
-		// BOS
+		/* BOS */
 		memset(&f, 0, sizeof(f));
 		f.label_sequence[0] = i;
 		f.label_sequence[1] = L;
@@ -250,7 +244,7 @@ crf1ml_features_t* crf1ml_generate_features(
 		f.attr = 0;
 		featureset_add(set, &f);
 
-		// EOS
+		/* EOS */
 		memset(&f, 0, sizeof(f));
 		f.label_sequence[0] = L;
 		f.label_sequence[1] = i;
@@ -268,7 +262,3 @@ crf1ml_features_t* crf1ml_generate_features(
 
     return features;
 }
-
-#ifdef __cplusplus
-} // extern "C"
-#endif

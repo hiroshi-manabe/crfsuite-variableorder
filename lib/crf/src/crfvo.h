@@ -28,10 +28,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: crf1m.h 168 2010-01-29 05:46:24Z naoaki $ */
+/* $Id: crfvo.h 168 2010-01-29 05:46:24Z naoaki $ */
 
-#ifndef    __CRF1M_H__
-#define    __CRF1M_H__
+#ifndef    __CRFVO_H__
+#define    __CRFVO_H__
 
 #include <time.h>
 #include <stdint.h>
@@ -40,21 +40,29 @@
 #define MAX_ORDER 8
 
 typedef struct {
-	crf_path_t path;
+	int    prev_path_index;
+	int    longest_suffix_index;
+	int    feature_count;
+} crfvo_path_t;
+
+typedef struct {
+	crfvo_path_t path;
 	floatval_t score;
 	floatval_t exp_weight;
 	int    best_path;
-} crf1m_path_score_t;
+} crfvo_path_score_t;
 
-// preprocessed data
+/*
+	Preprocessed data.
+*/
 typedef struct {
 	int                num_paths;
-	crf_path_t*        paths;
+	crfvo_path_t*      paths;
 	int*               num_paths_by_label;
 	int                training_path_index;
 	int                num_fids;
 	int*               fids;
-} crf1m_preprocessed_data_t;
+} crfvopd_t;
 
 /**
  * CRF context. 
@@ -85,36 +93,37 @@ typedef struct {
     int *labels;
 
 	int max_paths;
-	crf1m_path_score_t** path_scores; // alpha -> alpha * beta -> sigma
+	crfvo_path_score_t** path_scores; /* alpha -> alpha * beta -> sigma */
 	int*  num_paths;
 	int*  training_path_indexes;
 	int** num_paths_by_label;
 	int** fids_refs;
-	floatval_t* cur_temp_scores;  // beta * W (backward)
-	floatval_t* prev_temp_scores; // gamma (forward) / delta (backward)
+	floatval_t* cur_temp_scores;  /* beta * W (backward) */
+	floatval_t* prev_temp_scores; /* gamma (forward) / delta (backward) */
     /**
      * The normalize factor for the input sequence.
      *    This is equivalent to the total scores of all paths from BOS to
      *    EOS, given an input sequence.
+	 *    norm_significand * 2^(norm_exponent)
      */
     floatval_t norm_significand;
 	int norm_exponent;
 
-	// exponents of scores
+	/* exponents of scores */
     int *exponents;
 
-} crf1m_context_t;
+} crfvo_context_t;
 
-/* crf1m_common.c */
-crf1m_context_t* crf1mc_new(int L, int T, int max_paths);
-int crf1mc_set_num_items(crf1m_context_t* ctx, int T, int max_paths);
-void crf1mc_delete(crf1m_context_t* ctx);
-void crf1mc_set_weight(crf1m_context_t* ctx, const floatval_t* exp_weight);
-void crf1mc_accumulate_discount(crf1m_context_t* ctx);
-floatval_t crf1mc_logprob(crf1m_context_t* ctx);
-floatval_t crf1mc_viterbi(crf1m_context_t* ctx);
-void crf1mc_debug_context(crf1m_context_t* ctx, FILE *fp);
-void crf1mc_test_context(FILE *fp);
+/* crfvo_common.c */
+crfvo_context_t* crfvoc_new(int L, int T, int max_paths);
+int crfvoc_set_num_items(crfvo_context_t* ctx, int T, int max_paths);
+void crfvoc_delete(crfvo_context_t* ctx);
+void crfvoc_set_weight(crfvo_context_t* ctx, const floatval_t* exp_weight);
+void crfvoc_accumulate_discount(crfvo_context_t* ctx);
+floatval_t crfvoc_logprob(crfvo_context_t* ctx);
+floatval_t crfvoc_viterbi(crfvo_context_t* ctx);
+void crfvoc_debug_context(crfvo_context_t* ctx, FILE *fp);
+void crfvoc_test_context(FILE *fp);
 
 
 /**
@@ -141,15 +150,15 @@ typedef struct {
      * Frequency (observation expectation).
      */
     floatval_t    freq;
-} crf1ml_feature_t;
+} crfvol_feature_t;
 
 /**
  * Feature set.
  */
 typedef struct {
     int                    num_features;    /**< Number of features. */
-    crf1ml_feature_t*    features;        /**< Array of features. */
-} crf1ml_features_t;
+    crfvol_feature_t*    features;        /**< Array of features. */
+} crfvol_features_t;
 
 /**
  * Feature references.
@@ -160,63 +169,62 @@ typedef struct {
     int*    fids;            /**< Array of feature ids */
 } feature_refs_t;
 
-crf1ml_features_t* crf1ml_generate_features(
+crfvol_features_t* crfvol_generate_features(
     const crf_sequence_t *seqs,
     int num_sequences,
     int num_labels,
     int num_attributes,
-	int emulate_crf1m,
     floatval_t minfreq,
     crf_logging_callback func,
     void *instance
     );
 
-/* crf1m_model.c */
-struct tag_crf1mm;
-typedef struct tag_crf1mm crf1mm_t;
+/* crfvo_model.c */
+struct tag_crfvom;
+typedef struct tag_crfvom crfvom_t;
 
-struct tag_crf1mmw;
-typedef struct tag_crf1mmw crf1mmw_t;
+struct tag_crfvomw;
+typedef struct tag_crfvomw crfvomw_t;
 
 typedef struct {
     int        order;
     int        attr;
     uint8_t    label_sequence[MAX_ORDER];
     floatval_t    weight;
-} crf1mm_feature_t;
+} crfvom_feature_t;
 
-crf1mmw_t* crf1mmw(const char *filename);
-int crf1mmw_close(crf1mmw_t* writer);
-int crf1mmw_open_labels(crf1mmw_t* writer, int num_labels);
-int crf1mmw_close_labels(crf1mmw_t* writer);
-int crf1mmw_put_label(crf1mmw_t* writer, int lid, const char *value);
-int crf1mmw_open_attrs(crf1mmw_t* writer, int num_attributes);
-int crf1mmw_close_attrs(crf1mmw_t* writer);
-int crf1mmw_put_attr(crf1mmw_t* writer, int aid, const char *value);
-int crf1mmw_open_labelrefs(crf1mmw_t* writer, int num_labels);
-int crf1mmw_close_labelrefs(crf1mmw_t* writer);
-int crf1mmw_put_labelref(crf1mmw_t* writer, int lid, const feature_refs_t* ref, int *map);
-int crf1mmw_open_attrrefs(crf1mmw_t* writer, int num_attrs);
-int crf1mmw_close_attrrefs(crf1mmw_t* writer);
-int crf1mmw_put_attrref(crf1mmw_t* writer, int aid, const feature_refs_t* ref, int *map);
-int crf1mmw_open_features(crf1mmw_t* writer);
-int crf1mmw_close_features(crf1mmw_t* writer);
-int crf1mmw_put_feature(crf1mmw_t* writer, int fid, const crf1mm_feature_t* f);
+crfvomw_t* crfvomw(const char *filename);
+int crfvomw_close(crfvomw_t* writer);
+int crfvomw_open_labels(crfvomw_t* writer, int num_labels);
+int crfvomw_close_labels(crfvomw_t* writer);
+int crfvomw_put_label(crfvomw_t* writer, int lid, const char *value);
+int crfvomw_open_attrs(crfvomw_t* writer, int num_attributes);
+int crfvomw_close_attrs(crfvomw_t* writer);
+int crfvomw_put_attr(crfvomw_t* writer, int aid, const char *value);
+int crfvomw_open_labelrefs(crfvomw_t* writer, int num_labels);
+int crfvomw_close_labelrefs(crfvomw_t* writer);
+int crfvomw_put_labelref(crfvomw_t* writer, int lid, const feature_refs_t* ref, int *map);
+int crfvomw_open_attrrefs(crfvomw_t* writer, int num_attrs);
+int crfvomw_close_attrrefs(crfvomw_t* writer);
+int crfvomw_put_attrref(crfvomw_t* writer, int aid, const feature_refs_t* ref, int *map);
+int crfvomw_open_features(crfvomw_t* writer);
+int crfvomw_close_features(crfvomw_t* writer);
+int crfvomw_put_feature(crfvomw_t* writer, int fid, const crfvom_feature_t* f);
 
 
-crf1mm_t* crf1mm_new(const char *filename);
-void crf1mm_close(crf1mm_t* model);
-int crf1mm_get_num_attrs(crf1mm_t* model);
-int crf1mm_get_num_labels(crf1mm_t* model);
-const char *crf1mm_to_label(crf1mm_t* model, int lid);
-int crf1mm_to_lid(crf1mm_t* model, const char *value);
-int crf1mm_to_aid(crf1mm_t* model, const char *value);
-const char *crf1mm_to_attr(crf1mm_t* model, int aid);
-int crf1mm_get_labelref(crf1mm_t* model, int lid, feature_refs_t* ref);
-int crf1mm_get_attrref(crf1mm_t* model, int aid, feature_refs_t* ref);
-int crf1mm_get_featureid(feature_refs_t* ref, int i);
-int crf1mm_get_feature(crf1mm_t* model, int fid, crf1mm_feature_t* f);
-void crf1mm_dump(crf1mm_t* model, FILE *fp);
+crfvom_t* crfvom_new(const char *filename);
+void crfvom_close(crfvom_t* model);
+int crfvom_get_num_attrs(crfvom_t* model);
+int crfvom_get_num_labels(crfvom_t* model);
+const char *crfvom_to_label(crfvom_t* model, int lid);
+int crfvom_to_lid(crfvom_t* model, const char *value);
+int crfvom_to_aid(crfvom_t* model, const char *value);
+const char *crfvom_to_attr(crfvom_t* model, int aid);
+int crfvom_get_labelref(crfvom_t* model, int lid, feature_refs_t* ref);
+int crfvom_get_attrref(crfvom_t* model, int aid, feature_refs_t* ref);
+int crfvom_get_featureid(feature_refs_t* ref, int i);
+int crfvom_get_feature(crfvom_t* model, int fid, crfvom_feature_t* f);
+void crfvom_dump(crfvom_t* model, FILE *fp);
 
 
 typedef struct {
@@ -229,21 +237,20 @@ typedef struct {
     int            max_iterations;
     char*       linesearch;
     int         linesearch_max_iterations;
-} crf1ml_lbfgs_option_t;
+} crfvol_lbfgs_option_t;
 
 typedef struct {
     char*       algorithm;
     floatval_t    feature_minfreq;
-	int           feature_emulate_crf1m;
 
-    crf1ml_lbfgs_option_t   lbfgs;
-} crf1ml_option_t;
+    crfvol_lbfgs_option_t   lbfgs;
+} crfvol_option_t;
 
 
 /**
  * First-order Markov CRF trainer.
  */
-struct tag_crf1ml {
+struct tag_crfvol {
     int num_labels;            /**< Number of distinct output labels (L). */
     int num_attributes;        /**< Number of distinct attributes (A). */
 
@@ -254,7 +261,7 @@ struct tag_crf1ml {
     crf_sequence_t* seqs;
     crf_tagger_t tagger;
 
-    crf1m_context_t *ctx;    /**< CRF context. */
+    crfvo_context_t *ctx;    /**< CRF context. */
 
     logging_t* lg;
 
@@ -269,52 +276,67 @@ struct tag_crf1ml {
      * Feature array.
      *    Elements must be sorted by type, src, and dst in this order.
      */
-    crf1ml_feature_t *features;
+    crfvol_feature_t *features;
 
     floatval_t *w;            /**< Array of w (feature weights) */
 	floatval_t *exp_weight;
     floatval_t *prob;
 
     crf_params_t* params;
-    crf1ml_option_t opt;
+    crfvol_option_t opt;
 
     clock_t clk_begin;
     clock_t clk_prev;
 
     void *solver_data;
 
-	void *preprocessor_data;
-	void (*preprocessor_data_delete_func)(void*);
+	void *preprocessor;
+	void (*preprocessor_delete_func)(void*);
 };
-typedef struct tag_crf1ml crf1ml_t;
+typedef struct tag_crfvol crfvol_t;
 
 typedef void (*update_feature_t)(
-    crf1ml_feature_t* f,
+    crfvol_feature_t* f,
     const int fid,
     floatval_t prob,
     floatval_t scale,
-    crf1ml_t* trainer,
+    crfvol_t* trainer,
     const crf_sequence_t* seq,
     int t
     );
 
-void crf1ml_preprocess(crf1ml_t* trainer);
-void crf1ml_enum_features(crf1ml_t* trainer, const crf_sequence_t* seq, update_feature_t func, double* logp);
-void crf1ml_shuffle(int *perm, int N, int init);
-void crf1ml_set_context(crf1ml_t* trainer, const crf_sequence_t* seq);
-void crf1ml_preprocess_sequence(crf1ml_t* trainer, crf_sequence_t* seq);
+void crfvol_preprocess(crfvol_t* trainer);
+void crfvol_enum_features(crfvol_t* trainer, const crf_sequence_t* seq, update_feature_t func, double* logp);
+void crfvol_shuffle(int *perm, int N, int init);
+void crfvol_set_context(crfvol_t* trainer, const crf_sequence_t* seq);
 
-/* crf1m_learn_lbfgs.c */
-int crf1ml_lbfgs(crf1ml_t* crf1mt, crf1ml_option_t *opt);
-int crf1ml_lbfgs_options(crf_params_t* params, crf1ml_option_t* opt, int mode);
+/* crfvo_learn_lbfgs.c */
+int crfvol_lbfgs(crfvol_t* crfvot, crfvol_option_t *opt);
+int crfvol_lbfgs_options(crf_params_t* params, crfvol_option_t* opt, int mode);
 
-/* crf1m_tag.c */
-struct tag_crf1mt;
-typedef struct tag_crf1mt crf1mt_t;
+/* crfvo_tag.c */
+struct tag_crfvot;
+typedef struct tag_crfvot crfvot_t;
 
-crf1mt_t *crf1mt_new(crf1mm_t* crf1mm);
-void crf1mt_delete(crf1mt_t* crf1mt);
-int crf1mt_tag(crf1mt_t* crf1mt, crf_sequence_t *inst, crf_output_t* output);
+crfvot_t *crfvot_new(crfvom_t* crfvom);
+void crfvot_delete(crfvot_t* crfvot);
+int crfvot_tag(crfvot_t* crfvot, crf_sequence_t *inst, crf_output_t* output);
 
+/* crfvo_preprocess.c */
+crfvopd_t* crfvopd_new(int L, int num_paths, int num_fids);
+void crfvopd_delete(crfvopd_t* pp);
 
-#endif/*__CRF1M_H__*/
+struct tag_buffer_manager;
+typedef struct tag_buffer_manager buffer_manager_t;
+
+typedef struct tag_crfvopp {
+	buffer_manager_t* path_manager;
+	buffer_manager_t* node_manager;
+	buffer_manager_t* fid_list_manager;
+} crfvopp_t;
+
+void crfvopp_new(crfvopp_t* pp);
+void crfvopp_delete(crfvopp_t* pp);
+void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_t* seq);
+
+#endif/*__CRFVO_H__*/
