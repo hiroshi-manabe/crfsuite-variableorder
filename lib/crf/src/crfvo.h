@@ -117,6 +117,7 @@ typedef struct {
 /* crfvo_common.c */
 crfvo_context_t* crfvoc_new(int L, int T, int max_paths);
 int crfvoc_set_num_items(crfvo_context_t* ctx, int T, int max_paths);
+void crfvoc_set_context(crfvo_context_t* ctx, const crf_sequence_t* seq);
 void crfvoc_delete(crfvo_context_t* ctx);
 void crfvoc_set_weight(crfvo_context_t* ctx, const floatval_t* exp_weight);
 void crfvoc_calc_feature_expectations(crfvo_context_t* ctx);
@@ -124,7 +125,6 @@ floatval_t crfvoc_logprob(crfvo_context_t* ctx);
 floatval_t crfvoc_decode(crfvo_context_t* ctx);
 void crfvoc_debug_context(crfvo_context_t* ctx, FILE *fp);
 void crfvoc_test_context(FILE *fp);
-
 
 /**
  * A feature (for either state or transition).
@@ -305,7 +305,6 @@ typedef void (*update_feature_t)(
 void crfvol_preprocess(crfvol_t* trainer);
 void crfvol_enum_features(crfvol_t* trainer, const crf_sequence_t* seq, update_feature_t func, double* logp);
 void crfvol_shuffle(int *perm, int N, int init);
-void crfvol_set_context(crfvol_t* trainer, const crf_sequence_t* seq);
 
 /* crfvo_learn_lbfgs.c */
 int crfvol_lbfgs(crfvol_t* crfvot, crfvol_option_t *opt);

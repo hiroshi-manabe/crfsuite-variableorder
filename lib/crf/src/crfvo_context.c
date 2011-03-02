@@ -126,6 +126,30 @@ int crfvoc_set_num_items(crfvo_context_t* ctx, int T, int max_paths)
     return 0;
 }
 
+void crfvoc_set_context(crfvo_context_t* ctx, const crf_sequence_t* seq)
+{
+    int i, t;
+    const crf_item_t* item = NULL;
+    const int T = seq->num_items;
+
+    ctx->num_items = T;
+
+    for (t = 0; t < T; ++t) {
+		crfvopd_t* preprocessed_data;
+        item = &seq->items[t];
+        ctx->labels[t] = item->label;
+		preprocessed_data = (crfvopd_t*)item->preprocessed_data;
+		memset(ctx->path_scores[t], 0, sizeof(crfvo_path_score_t) * preprocessed_data->num_paths);
+		for (i = 0; i < preprocessed_data->num_paths; ++i) {
+			ctx->path_scores[t][i].path = preprocessed_data->paths[i];
+		}
+		ctx->num_paths[t] = preprocessed_data->num_paths;
+		ctx->num_paths_by_label[t] = preprocessed_data->num_paths_by_label;
+		ctx->fids_refs[t] = preprocessed_data->fids;
+		ctx->training_path_indexes[t] = preprocessed_data->training_path_index;
+    }
+}
+
 void crfvoc_delete(crfvo_context_t* ctx)
 {
     if (ctx != NULL) {

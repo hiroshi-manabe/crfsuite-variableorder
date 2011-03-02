@@ -82,10 +82,13 @@ int crfvot_tag(crfvot_t* crfvot, crf_sequence_t *inst, crf_output_t* output)
 	feature_refs_t* attrs;
 	crfvol_feature_t* features;
 	crfvopp_t* preprocessor;
+	floatval_t* exp_weight;
 
 	attrs = malloc(crfvot->num_attributes * sizeof(feature_refs_t));
 	features = malloc(crfvot->num_features * sizeof(crfvol_feature_t));
+	exp_weight = malloc(crfvot->num_features * sizeof(floatval_t));
 	preprocessor = malloc(sizeof(crfvopp_t));
+	if (!attrs || !features || !exp_weight || !preprocessor) return CRFERR_OUTOFMEMORY;
 
 	crfvopp_new(preprocessor);
 
@@ -99,6 +102,7 @@ int crfvot_tag(crfvot_t* crfvot, crf_sequence_t *inst, crf_output_t* output)
 		features[i].attr = f.attr;
 		memcpy(features[i].label_sequence, f.label_sequence, MAX_ORDER);
 		features[i].order = f.order;
+		exp_weight[i] = exp(f.weight);
 	}
 
 	crfvopp_preprocess_sequence(
@@ -110,6 +114,9 @@ int crfvot_tag(crfvot_t* crfvot, crf_sequence_t *inst, crf_output_t* output)
 		);
 
 	crfvoc_set_num_items(ctx, inst->num_items, inst->max_paths);
+
+	crfvoc_set_context(ctx, inst);
+	crfvoc_set_weight(ctx, exp_weight);
 
     score = crfvoc_decode(ctx);
 
@@ -124,6 +131,7 @@ int crfvot_tag(crfvot_t* crfvot, crf_sequence_t *inst, crf_output_t* output)
 	free(preprocessor);
 	free(attrs);
 	free(features);
+	free(exp_weight);
 
     return 0;
 }

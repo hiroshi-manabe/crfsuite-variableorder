@@ -115,7 +115,7 @@ static lbfgsfloatval_t lbfgs_evaluate(
      */
     for (i = 0;i < N;++i) {
         /* Set label sequences and state scores. */
-        crfvol_set_context(crfvot, &seqs[i]);
+        crfvoc_set_context(crfvot->ctx, &seqs[i]);
 
 		/*crfvoc_debug_context(crfvot->ctx, stdout);*/
         /*printf("lognorm = %f\n", crfvot->ctx->log_norm);*/
