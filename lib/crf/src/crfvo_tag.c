@@ -48,6 +48,7 @@
 struct tag_crfvot {
     int num_labels;            /**< Number of distinct output labels (L). */
     int num_attributes;        /**< Number of distinct attributes (A). */
+	int num_features;          /**< Number of features. */
 
     crfvom_t *model;        /**< CRF model. */
     crfvo_context_t *ctx;    /**< CRF context. */
@@ -60,6 +61,7 @@ crfvot_t *crfvot_new(crfvom_t* crfvom)
     crfvot = (crfvot_t*)calloc(1, sizeof(crfvot_t));
     crfvot->num_labels = crfvom_get_num_labels(crfvom);
     crfvot->num_attributes = crfvom_get_num_attrs(crfvom);
+	crfvot->num_features = crfvom_get_num_features(crfvom);
     crfvot->model = crfvom;
     crfvot->ctx = crfvoc_new(crfvot->num_labels, 0, 0);
 
@@ -77,14 +79,37 @@ int crfvot_tag(crfvot_t* crfvot, crf_sequence_t *inst, crf_output_t* output)
     int i;
     floatval_t score = 0;
     crfvo_context_t* ctx = crfvot->ctx;
+	feature_refs_t* attrs;
+	crfvol_feature_t* features;
+	crfvopp_t* preprocessor;
 
-	for (i = 0; i < inst->num_items; ++i) {
-		if (inst->items[i].preprocessed_data == 0) {
-//			crfvopp_preprocess_sequence(crfvot, inst);
-			break;
-		}
+	attrs = malloc(crfvot->num_attributes * sizeof(feature_refs_t));
+	features = malloc(crfvot->num_features * sizeof(crfvol_feature_t));
+	preprocessor = malloc(sizeof(crfvopp_t));
+
+	crfvopp_new(preprocessor);
+
+	for (i = 0; i < crfvot->num_attributes; ++i) {
+		crfvom_get_attrref(crfvot->model, i, &attrs[i]);
 	}
-    crfvoc_set_num_items(ctx, inst->num_items, inst->max_paths);
+
+	for (i = 0; i < crfvot->num_features; ++i) {
+		crfvom_feature_t f;
+		crfvom_get_feature(crfvot->model, i, &f);
+		features[i].attr = f.attr;
+		memcpy(features[i].label_sequence, f.label_sequence, MAX_ORDER);
+		features[i].order = f.order;
+	}
+
+	crfvopp_preprocess_sequence(
+		preprocessor,
+		attrs,
+		features,
+		crfvot->num_labels,
+		inst
+		);
+
+	crfvoc_set_num_items(ctx, inst->num_items, inst->max_paths);
 
     score = crfvoc_decode(ctx);
 
@@ -94,6 +119,11 @@ int crfvot_tag(crfvot_t* crfvot, crf_sequence_t *inst, crf_output_t* output)
         output->labels[i] = ctx->labels[i];
     }
     output->num_labels = inst->num_items;
+
+	crfvopp_delete(preprocessor);
+	free(preprocessor);
+	free(attrs);
+	free(features);
 
     return 0;
 }

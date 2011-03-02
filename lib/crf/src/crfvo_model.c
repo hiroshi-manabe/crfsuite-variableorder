@@ -687,6 +687,11 @@ int crfvom_get_num_labels(crfvom_t* model)
     return model->header->num_labels;
 }
 
+int crfvom_get_num_features(crfvom_t* model)
+{
+    return model->header->num_features;
+}
+
 const char *crfvom_to_label(crfvom_t* model, int lid)
 {
     if (model->labels != NULL) {

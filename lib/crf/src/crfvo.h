@@ -213,6 +213,7 @@ crfvom_t* crfvom_new(const char *filename);
 void crfvom_close(crfvom_t* model);
 int crfvom_get_num_attrs(crfvom_t* model);
 int crfvom_get_num_labels(crfvom_t* model);
+int crfvom_get_num_features(crfvom_t* model);
 const char *crfvom_to_label(crfvom_t* model, int lid);
 int crfvom_to_lid(crfvom_t* model, const char *value);
 int crfvom_to_aid(crfvom_t* model, const char *value);
