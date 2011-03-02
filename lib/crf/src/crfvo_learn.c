@@ -53,6 +53,8 @@
 
 #define    FEATURE(trainer, k) \
     (&(trainer)->features[(k)])
+#define    ATTRIBUTE(trainer, a) \
+    (&(trainer)->attributes[(a)])
 
 void crfvol_set_context(crfvol_t* trainer, const crf_sequence_t* seq)
 {
@@ -608,6 +610,23 @@ static int crf_train_save(crf_trainer_t* trainer, const char *filename, crf_dict
         }
     }
     if (ret = crfvomw_close_attrs(writer)) {
+        goto error_exit;
+    }
+
+    /* Write attribute feature references. */
+    logging(crfvot->lg, "Writing feature references for attributes\n");
+    if (ret = crfvomw_open_attrrefs(writer, B)) {
+        goto error_exit;
+    }
+    for (a = 0;a < A;++a) {
+        if (0 <= amap[a]) {
+            attr = ATTRIBUTE(crfvot, a);
+            if (ret = crfvomw_put_attrref(writer, amap[a], attr, fmap)) {
+                goto error_exit;
+            }
+        }
+    }
+    if (ret = crfvomw_close_attrrefs(writer)) {
         goto error_exit;
     }
 

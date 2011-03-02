@@ -47,9 +47,9 @@
 #define CHUNK_LABELREF  "LFRF"
 #define CHUNK_ATTRREF   "AFRF"
 #define CHUNK_FEATURE   "FEAT"
-#define HEADER_SIZE     48
+#define HEADER_SIZE     44
 #define CHUNK_SIZE      12
-#define FEATURE_SIZE    20
+#define FEATURE_SIZE    24
 
 enum {
     WSTATE_NONE,
@@ -560,6 +560,7 @@ int crfvomw_close_features(crfvomw_t* writer)
 
     /* Move the file pointer to the tail. */
     fseek(fp, end, SEEK_SET);
+	writer->header.num_features = hfeat->num;
 
     /* Uninitialize. */
     free(hfeat);
@@ -634,6 +635,7 @@ crfvom_t* crfvom_new(const char *filename)
     p += read_uint32(p, &header->off_features);
     p += read_uint32(p, &header->off_labels);
     p += read_uint32(p, &header->off_attrs);
+	p += read_uint32(p, &header->off_attrrefs);
     model->header = header;
 
     model->labels = cqdb_reader(
