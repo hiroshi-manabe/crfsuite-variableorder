@@ -53,8 +53,6 @@
 
 #define    FEATURE(trainer, k) \
     (&(trainer)->features[(k)])
-#define    ATTRIBUTE(trainer, a) \
-    (&(trainer)->attributes[(a)])
 
 void crfvol_set_context(crfvol_t* trainer, const crf_sequence_t* seq)
 {
