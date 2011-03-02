@@ -364,7 +364,7 @@ int crf_train_tag(crf_tagger_t* tagger, crf_sequence_t *inst, crf_output_t* outp
 
     crfvol_set_context(crfvot, inst);
 	crfvoc_set_weight(ctx, exp_weight);
-    logscore = crfvoc_viterbi(crfvot->ctx);
+    logscore = crfvoc_decode(crfvot->ctx);
 
     crf_output_init_n(output, inst->num_items);
     output->probability = logscore;

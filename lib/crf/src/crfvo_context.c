@@ -158,7 +158,8 @@ floatval_t crfvoc_logprob(crfvo_context_t* ctx)
     return ret;
 }
 
-floatval_t crfvoc_viterbi(crfvo_context_t* ctx)
+/* decoding. (forward) */
+floatval_t crfvoc_decode(crfvo_context_t* ctx)
 {
 	int T = ctx->num_items;
 	int L = ctx->num_labels;
@@ -308,7 +309,8 @@ void crfvoc_set_weight(
 	}
 }
 
-void crfvoc_accumulate_discount(
+/* calculate feature expectations by sum-difference algorithm. */
+void crfvoc_calc_feature_expectations(
     crfvo_context_t* ctx
     )
 {
@@ -355,7 +357,7 @@ void crfvoc_accumulate_discount(
 	ctx->norm_significand = prev_temp_scores[0] * real_scale_diff;
 	ctx->norm_exponent = ctx->exponents[T-1] + exponent_diff;	
 
-	/* backward / accumulate score */
+	/* backward / sum up the scores */
 	last_n = ctx->num_paths[T-1];
 	memset(cur_temp_scores, 0, sizeof(floatval_t) * last_n);
 	cur_temp_scores[0] = real_scale_diff; /* delta for the empty path */

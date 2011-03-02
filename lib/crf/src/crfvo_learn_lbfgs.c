@@ -121,7 +121,7 @@ static lbfgsfloatval_t lbfgs_evaluate(
         /*printf("lognorm = %f\n", crfvot->ctx->log_norm);*/
 
         crfvoc_set_weight(crfvot->ctx, crfvot->exp_weight);
-        crfvoc_accumulate_discount(crfvot->ctx);
+        crfvoc_calc_feature_expectations(crfvot->ctx);
 
         /* Compute the probability of the input sequence on the model. */
         logp = crfvoc_logprob(crfvot->ctx);

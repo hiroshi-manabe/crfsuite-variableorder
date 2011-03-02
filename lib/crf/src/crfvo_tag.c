@@ -86,7 +86,7 @@ int crfvot_tag(crfvot_t* crfvot, crf_sequence_t *inst, crf_output_t* output)
 	}
     crfvoc_set_num_items(ctx, inst->num_items, inst->max_paths);
 
-    score = crfvoc_viterbi(ctx);
+    score = crfvoc_decode(ctx);
 
     crf_output_init_n(output, inst->num_items);
     output->probability = score;
