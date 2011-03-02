@@ -71,7 +71,6 @@ typedef struct {
     uint32_t    off_features;   /* Offset to features. */
     uint32_t    off_labels;     /* Offset to label CQDB. */
     uint32_t    off_attrs;      /* Offset to attribute CQDB. */
-    uint32_t    off_labelrefs;  /* Offset to label feature references. */
     uint32_t    off_attrrefs;   /* Offset to attribute feature references. */
 } header_t;
 
@@ -273,7 +272,6 @@ int crfvomw_close(crfvomw_t* writer)
     write_uint32(fp, header->off_features);
     write_uint32(fp, header->off_labels);
     write_uint32(fp, header->off_attrs);
-    write_uint32(fp, header->off_labelrefs);
     write_uint32(fp, header->off_attrrefs);
 
     /* Check for any error occurrence. */
@@ -399,113 +397,6 @@ int crfvomw_put_attr(crfvomw_t* writer, int aid, const char *value)
     /* Put the attribute. */
     if (cqdb_writer_put(writer->dbw, value, aid)) {
         return 1;
-    }
-
-    return 0;
-}
-
-int crfvomw_open_labelrefs(crfvomw_t* writer, int num_labels)
-{
-    uint32_t offset;
-    FILE *fp = writer->fp;
-    featureref_header_t* href = NULL;
-    size_t size = CHUNK_SIZE + sizeof(uint32_t) * num_labels;
-
-    /* Check if we aren't writing anything at this moment. */
-    if (writer->state != WSTATE_NONE) {
-        return CRFERR_INTERNAL_LOGIC;
-    }
-
-    /* Allocate a feature reference array. */
-    href = (featureref_header_t*)calloc(size, 1);
-    if (href == NULL) {
-        return CRFERR_OUTOFMEMORY;
-    }
-
-    /* Align the offset to a DWORD boundary. */
-    offset = (uint32_t)ftell(fp);
-    while (offset % 4 != 0) {
-        uint8_t c = 0;
-        fwrite(&c, sizeof(uint8_t), 1, fp);
-        ++offset;
-    }
-
-    /* Store the current offset position to the file header. */
-    writer->header.off_labelrefs = offset;
-    fseek(fp, size, SEEK_CUR);
-
-    /* Fill members in the feature reference header. */
-    strncpy(href->chunk, CHUNK_LABELREF, 4);
-    href->size = 0;
-    href->num = num_labels;
-
-    writer->href = href;
-    writer->state = WSTATE_LABELREFS;
-    return 0;
-}
-
-int crfvomw_close_labelrefs(crfvomw_t* writer)
-{
-    uint32_t i;
-    FILE *fp = writer->fp;
-    featureref_header_t* href = writer->href;
-    uint32_t begin = writer->header.off_labelrefs, end = 0;
-
-    /* Make sure that we are writing label feature references. */
-    if (writer->state != WSTATE_LABELREFS) {
-        return CRFERR_INTERNAL_LOGIC;
-    }
-
-    /* Store the current offset position. */
-    end = (uint32_t)ftell(fp);
-
-    /* Compute the size of this chunk. */
-    href->size = (end - begin);
-
-    /* Write the chunk header and offset array. */
-    fseek(fp, begin, SEEK_SET);
-    write_uint8_array(fp, href->chunk, 4);
-    write_uint32(fp, href->size);
-    write_uint32(fp, href->num);
-    for (i = 0;i < href->num;++i) {
-        write_uint32(fp, href->offsets[i]);
-    }
-
-    /* Move the file pointer to the tail. */
-    fseek(fp, end, SEEK_SET);
-
-    /* Uninitialize. */
-    free(href);
-    writer->href = NULL;
-    writer->state = WSTATE_NONE;
-    return 0;
-}
-
-int crfvomw_put_labelref(crfvomw_t* writer, int lid, const feature_refs_t* ref, int *map)
-{
-    int i, fid;
-    uint32_t n = 0, offset = 0;
-    FILE *fp = writer->fp;
-    featureref_header_t* href = writer->href;
-
-    /* Make sure that we are writing label feature references. */
-    if (writer->state != WSTATE_LABELREFS) {
-        return CRFERR_INTERNAL_LOGIC;
-    }
-
-    /* Store the current offset to the offset array. */
-    href->offsets[lid] = ftell(fp);
-
-    /* Count the number of references to active features. */
-    for (i = 0;i < ref->num_features;++i) {
-        if (0 <= map[ref->fids[i]]) ++n;
-    }
-
-    /* Write the feature reference. */
-    write_uint32(fp, (uint32_t)n);
-    for (i = 0;i < ref->num_features;++i) {
-        fid = map[ref->fids[i]];
-        if (0 <= fid) write_uint32(fp, (uint32_t)fid);
     }
 
     return 0;
@@ -832,22 +723,6 @@ const char *crfvom_to_attr(crfvom_t* model, int aid)
     }
 }
 
-int crfvom_get_labelref(crfvom_t* model, int lid, feature_refs_t* ref)
-{
-    uint8_t *p = model->buffer;
-    uint32_t offset;
-
-    p += model->header->off_labelrefs;
-    p += CHUNK_SIZE;
-    p += sizeof(uint32_t) * lid;
-    read_uint32(p, &offset);
-
-    p = model->buffer + offset;
-    p += read_uint32(p, &ref->num_features);
-    ref->fids = (int*)p;
-    return 0;
-}
-
 int crfvom_get_attrref(crfvom_t* model, int aid, feature_refs_t* ref)
 {
     uint8_t *p = model->buffer;
@@ -910,7 +785,6 @@ void crfvom_dump(crfvom_t* crfvom, FILE *fp)
     fprintf(fp, "  off_features: 0x%X\n", hfile->off_features);
     fprintf(fp, "  off_labels: 0x%X\n", hfile->off_labels);
     fprintf(fp, "  off_attrs: 0x%X\n", hfile->off_attrs);
-    fprintf(fp, "  off_labelrefs: 0x%X\n", hfile->off_labelrefs);
     fprintf(fp, "  off_attrrefs: 0x%X\n", hfile->off_attrrefs);
     fprintf(fp, "}\n");
     fprintf(fp, "\n");
