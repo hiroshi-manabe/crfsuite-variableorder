@@ -320,8 +320,11 @@ void trie_get_preprocessed_data(
 	*preprocessed_data_p = preprocessed_data;
 }
 
-void crfvopp_new(crfvopp_t* pp)
+crfvopp_t* crfvopp_new()
 {
+	crfvopp_t* pp = (crfvopp_t*)malloc(sizeof(crfvopp_t));
+	if (!pp) return 0;
+
 	pp->path_manager = (buffer_manager_t*)malloc(sizeof(buffer_manager_t));
 	pp->node_manager = (buffer_manager_t*)malloc(sizeof(buffer_manager_t));
 	pp->fid_list_manager = (buffer_manager_t*)malloc(sizeof(buffer_manager_t));
@@ -330,6 +333,7 @@ void crfvopp_new(crfvopp_t* pp)
 		buf_init(pp->node_manager, sizeof(trie_node_t), 65536);
 		buf_init(pp->fid_list_manager, sizeof(fid_list_t), 65536);
 	}
+	return pp;
 }
 
 void crfvopp_delete(crfvopp_t* pp)
@@ -341,6 +345,7 @@ void crfvopp_delete(crfvopp_t* pp)
 	free(pp->node_manager);
 	free(pp->fid_list_manager);
 	pp->path_manager = pp->node_manager = pp->fid_list_manager = 0;
+	free(pp);
 }
 
 void crfvopp_preprocess_sequence(

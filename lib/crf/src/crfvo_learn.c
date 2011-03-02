@@ -316,10 +316,7 @@ void crfvol_delete(crfvol_t* trainer)
     if (trainer != NULL) {
         free(trainer->lg);
 		free(trainer->exp_weight);
-		if (trainer->preprocessor_delete_func) {
-			trainer->preprocessor_delete_func(trainer->preprocessor);
-		}
-		free(trainer->preprocessor);
+		if (trainer->preprocessor) crfvopp_delete(trainer->preprocessor);
     }
 	free(trainer);
 }
@@ -431,9 +428,7 @@ static int crf_train_train(
     crfvot->num_sequences = num_instances;
     crfvot->seqs = seqs;
 
-	crfvot->preprocessor = malloc(sizeof(crfvopp_t));
-	crfvot->preprocessor_delete_func = (void (*)(void*))crfvopp_delete;
-	crfvopp_new((crfvopp_t*)crfvot->preprocessor);
+	crfvot->preprocessor = crfvopp_new();
 
 	/* preprocess */
 	crfvol_preprocess(crfvot);
@@ -637,10 +632,7 @@ static int crf_train_release(crf_trainer_t* trainer)
     int count = crf_interlocked_decrement(&trainer->nref);
     if (count == 0) {
 		crfvol_t* crfvot = (crfvol_t*)trainer->internal;
-		if (crfvot->preprocessor) {
-			crfvot->preprocessor_delete_func(crfvot->preprocessor);
-			free(crfvot->preprocessor);
-		}
+		if (crfvot->preprocessor) crfvopp_delete(crfvot->preprocessor);
     }
     return count;
 }

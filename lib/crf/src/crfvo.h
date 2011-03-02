@@ -244,8 +244,31 @@ typedef struct {
 } crfvol_option_t;
 
 
+/* crfvo_preprocess.c */
+crfvopd_t* crfvopd_new(int L, int num_paths, int num_fids);
+void crfvopd_delete(crfvopd_t* pp);
+
+struct tag_buffer_manager;
+typedef struct tag_buffer_manager buffer_manager_t;
+
+typedef struct tag_crfvopp {
+	buffer_manager_t* path_manager;
+	buffer_manager_t* node_manager;
+	buffer_manager_t* fid_list_manager;
+} crfvopp_t;
+
+crfvopp_t* crfvopp_new();
+void crfvopp_delete(crfvopp_t* pp);
+void crfvopp_preprocess_sequence(
+	crfvopp_t* pp,
+	const feature_refs_t* attrs,
+	const crfvol_feature_t* features,
+	const int L,
+	crf_sequence_t* seq);
+
+
 /**
- * First-order Markov CRF trainer.
+ * Variable-order Markov CRF trainer.
  */
 struct tag_crfvol {
     int num_labels;            /**< Number of distinct output labels (L). */
@@ -287,8 +310,7 @@ struct tag_crfvol {
 
     void *solver_data;
 
-	void *preprocessor;
-	void (*preprocessor_delete_func)(void*);
+	crfvopp_t *preprocessor;
 };
 typedef struct tag_crfvol crfvol_t;
 
@@ -317,27 +339,5 @@ typedef struct tag_crfvot crfvot_t;
 crfvot_t *crfvot_new(crfvom_t* crfvom);
 void crfvot_delete(crfvot_t* crfvot);
 int crfvot_tag(crfvot_t* crfvot, crf_sequence_t *inst, crf_output_t* output);
-
-/* crfvo_preprocess.c */
-crfvopd_t* crfvopd_new(int L, int num_paths, int num_fids);
-void crfvopd_delete(crfvopd_t* pp);
-
-struct tag_buffer_manager;
-typedef struct tag_buffer_manager buffer_manager_t;
-
-typedef struct tag_crfvopp {
-	buffer_manager_t* path_manager;
-	buffer_manager_t* node_manager;
-	buffer_manager_t* fid_list_manager;
-} crfvopp_t;
-
-void crfvopp_new(crfvopp_t* pp);
-void crfvopp_delete(crfvopp_t* pp);
-void crfvopp_preprocess_sequence(
-	crfvopp_t* pp,
-	const feature_refs_t* attrs,
-	const crfvol_feature_t* features,
-	const int L,
-	crf_sequence_t* seq);
 
 #endif/*__CRFVO_H__*/
