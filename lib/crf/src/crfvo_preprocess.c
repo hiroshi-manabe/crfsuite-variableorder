@@ -37,11 +37,6 @@
 #include <crfsuite.h>
 #include "crfvo.h"
 
-#define    FEATURE(trainer, k) \
-    (&(trainer)->features[(k)])
-#define    ATTRIBUTE(trainer, a) \
-    (&(trainer)->attributes[(a)])
-
 struct tag_buffer_manager;
 typedef struct tag_buffer_manager buffer_manager_t;
 
@@ -348,13 +343,17 @@ void crfvopp_delete(crfvopp_t* pp)
 	pp->path_manager = pp->node_manager = pp->fid_list_manager = 0;
 }
 
-void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_t* seq)
+void crfvopp_preprocess_sequence(
+	crfvopp_t* pp,
+	const feature_refs_t* attrs,
+	const crfvol_feature_t* features,
+	const int num_labels,
+	crf_sequence_t* seq)
 {
     const int T = seq->num_items;
-    const int L = trainer->num_labels;
+    const int L = num_labels;
 	int i, j, l, r, t;
 	crf_item_t* item;
-    crfvol_feature_t* f;
 	trie_t* trie_array;
 	trie_t* trie_array_orig;
 	uint8_t* label_sequence = malloc(sizeof(uint8_t) * (T+1));
@@ -366,22 +365,21 @@ void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_
 	for (t = -1; t < T; ++t) { /* -1: BOS */
 		int created;
 		crfvol_feature_t feature;
-		f = &feature;
 
 		trie_init(&trie_array[t], L+1, pp->node_manager, pp->path_manager, pp->fid_list_manager);
 
-		f->order = 0;
-		trie_set_feature(&trie_array[t], f, INVALID, &created);
+		feature.order = 0;
+		trie_set_feature(&trie_array[t], &feature, INVALID, &created);
 
 		if (t == -1 || t == T-1) { /* BOS or EOS */
-			f->label_sequence[0] = L;
-			f->order = 1;
-			trie_set_feature(&trie_array[t], f, INVALID, &created);
+			feature.label_sequence[0] = L;
+			feature.order = 1;
+			trie_set_feature(&trie_array[t], &feature, INVALID, &created);
 		} else {
 			for (l = 0; l < L; ++l) {
-				f->label_sequence[0] = l;
-				f->order = 1;
-				trie_set_feature(&trie_array[t], f, INVALID, &created);
+				feature.label_sequence[0] = l;
+				feature.order = 1;
+				trie_set_feature(&trie_array[t], &feature, INVALID, &created);
 			}
 		}
 		if (t == -1) continue; /* BOS */
@@ -390,15 +388,16 @@ void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_
 		
 		for (i = 0; i < item->num_contents; ++i) {
 			int a = item->contents[i].aid;
-			const feature_refs_t* attr = ATTRIBUTE(trainer, a);
+			const feature_refs_t* attr = &attrs[a];
 
 			/* Loop over features for the attribute. */
 			for (r = 0; r < attr->num_features; ++r) {
 				int next_path;
 				int fid;
+			    const crfvol_feature_t* f;
 
 				fid = attr->fids[r];
-				f = FEATURE(trainer, fid);
+				f = &features[fid];
 				if (
 					(f->order > t+1 && !(f->order == t+2 && f->label_sequence[f->order-1] == L)) ||
 					(f->label_sequence[f->order-1] == L && t != f->order-2 && f->order > 1) ||

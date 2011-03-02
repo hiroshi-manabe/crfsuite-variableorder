@@ -333,6 +333,11 @@ typedef struct tag_crfvopp {
 
 void crfvopp_new(crfvopp_t* pp);
 void crfvopp_delete(crfvopp_t* pp);
-void crfvopp_preprocess_sequence(crfvopp_t* pp, crfvol_t* trainer, crf_sequence_t* seq);
+void crfvopp_preprocess_sequence(
+	crfvopp_t* pp,
+	const feature_refs_t* attrs,
+	const crfvol_feature_t* features,
+	const int L,
+	crf_sequence_t* seq);
 
 #endif/*__CRFVO_H__*/

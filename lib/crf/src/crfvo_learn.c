@@ -226,7 +226,12 @@ void crfvol_preprocess(
 	logging_progress_start(trainer->lg);
 
 	for (i = 0; i < trainer->num_sequences; ++i) {
-		crfvopp_preprocess_sequence((crfvopp_t*)trainer->preprocessor, trainer, &trainer->seqs[i]);
+		crfvopp_preprocess_sequence(
+			(crfvopp_t*)trainer->preprocessor,
+			trainer->attributes,
+			trainer->features,
+			trainer->num_labels,
+			&trainer->seqs[i]);
 
 		if (trainer->max_paths < trainer->seqs[i].max_paths) {
 			trainer->max_paths = trainer->seqs[i].max_paths;
@@ -354,7 +359,12 @@ int crf_train_tag(crf_tagger_t* tagger, crf_sequence_t *inst, crf_output_t* outp
 
 	for (i = 0; i < inst->num_items; ++i) {
 		if (inst->items[i].preprocessed_data == 0) {
-			crfvopp_preprocess_sequence((crfvopp_t*)((crfvol_t*)tagger->internal)->preprocessor, (crfvol_t*)tagger->internal, inst);
+			crfvopp_preprocess_sequence(
+				(crfvopp_t*)crfvot->preprocessor,
+				crfvot->attributes,
+				crfvot->features,
+				crfvot->num_labels,
+				inst);
 			break;
 		}
 	}
