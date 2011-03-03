@@ -291,14 +291,6 @@ int main_learn(int argc, char *argv[], const char *argv0)
         goto force_exit;        
     }
 
-    /* Read the features */
-    fprintf(fpo, "Reading the features\n");
-    clk_begin = clock();
-    trainer->read_features(trainer, fp, attrs, labels);
-    clk_current = clock();
-    if (fp != fpi) fclose(fp);
-
-
     /* Report the statistics of the training data. */
     fprintf(fpo, "Number of instances: %d\n", data_train.num_instances);
     fprintf(fpo, "Total number of items: %d\n", crf_data_totalitems(&data_train));
@@ -308,7 +300,14 @@ int main_learn(int argc, char *argv[], const char *argv0)
     fprintf(fpo, "\n");
     fflush(fpo);
 
-    /* Read a test data if necessary */
+    /* Read the features */
+    fprintf(fpo, "Reading the features\n");
+    clk_begin = clock();
+    trainer->read_features(trainer, fp, attrs, labels);
+    clk_current = clock();
+    if (fp != fpi) fclose(fp);
+
+	/* Read a test data if necessary */
     if (opt.evaluation != NULL) {
         fp = fopen(opt.evaluation, "r");
         if (fp == NULL) {
