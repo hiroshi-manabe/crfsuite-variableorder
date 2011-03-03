@@ -269,7 +269,6 @@ crfvol_features_t* crfvol_read_features(
 	FILE* fpi,
 	crf_dictionary_t* labels,
     crf_dictionary_t* attrs,
-    floatval_t minfreq,
     crf_logging_callback func,
     void *instance
     )
@@ -337,7 +336,7 @@ crfvol_features_t* crfvol_read_features(
 	logging_progress_end(&lg);
 
     /* Convert the feature set to an feature array. */
-    featureset_generate(features, set, minfreq);
+    featureset_generate(features, set, 1);
 
     /* Delete the feature set. */
     featureset_delete(set);

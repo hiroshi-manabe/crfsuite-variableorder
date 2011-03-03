@@ -372,6 +372,32 @@ void crf_train_set_evaluate_callback(crf_trainer_t* trainer, void *instance, crf
     crfvot->cbe_proc = cbe;
 }
 
+static int crf_train_read_features(
+	crf_trainer_t* trainer,
+	const char* filename, 
+	crf_dictionary_t* attrs,
+	crf_dictionary_t* labels
+	)
+{
+    crfvol_t *crfvot = (crfvol_t*)trainer->internal;
+	FILE* fpi = fopen(filename, "r");
+	if (fpi == NULL) {
+		return -1;
+	}
+
+	trainer->features = crfvol_read_features(
+		fpi,
+		labels,
+		attrs,
+        crfvot->lg->func,
+        crfvot->lg->instance
+		);
+
+	fclose(fpi);
+
+	return 0;
+}
+
 static int crf_train_train(
     crf_trainer_t* trainer,
     void* instances,
@@ -633,6 +659,11 @@ static int crf_train_release(crf_trainer_t* trainer)
     if (count == 0) {
 		crfvol_t* crfvot = (crfvol_t*)trainer->internal;
 		if (crfvot->preprocessor) crfvopp_delete(crfvot->preprocessor);
+
+		if (trainer->features) {
+			free(trainer->features);
+			trainer->features = 0;
+		}
     }
     return count;
 }
@@ -659,6 +690,8 @@ int crfvol_create_instance(const char *interface, void **ptr)
     
         trainer->set_message_callback = crf_train_set_message_callback;
         trainer->set_evaluate_callback = crf_train_set_evaluate_callback;
+
+		trainer->read_features = crf_train_read_features;
         trainer->train = crf_train_train;
         trainer->save = crf_train_save;
         trainer->internal = crfvol_new();

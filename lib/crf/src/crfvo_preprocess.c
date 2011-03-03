@@ -346,6 +346,7 @@ void crfvopp_delete(crfvopp_t* pp)
 	free(pp->fid_list_manager);
 	pp->path_manager = pp->node_manager = pp->fid_list_manager = 0;
 	free(pp);
+	pp = 0;
 }
 
 void crfvopp_preprocess_sequence(

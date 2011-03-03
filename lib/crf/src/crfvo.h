@@ -183,7 +183,6 @@ crfvol_features_t* crfvol_read_features(
 	FILE* fpi,
 	crf_dictionary_t* labels,
     crf_dictionary_t* attrs,
-    floatval_t minfreq,
     crf_logging_callback func,
     void *instance
     );

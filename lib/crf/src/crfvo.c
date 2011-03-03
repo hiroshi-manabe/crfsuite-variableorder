@@ -177,9 +177,6 @@ static int tagger_tag(crf_tagger_t* tagger, crf_sequence_t *inst, crf_output_t* 
     return 0;
 }
 
-
-
-
 /*
  *    Implementation of crf_model_t object.
  *    This object is instantiated by crfvo_model_create() function.
