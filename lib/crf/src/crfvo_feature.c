@@ -46,6 +46,8 @@
 #include "crfvo.h"
 #include "rumavl.h"    /* AVL tree library necessary for feature generation. */
 
+#include "../../../frontend/iwa.h"
+
 /**
  * Feature set.
  */
@@ -264,22 +266,21 @@ crfvol_features_t* crfvol_generate_features(
 }
 
 crfvol_features_t* crfvol_read_features(
-    const crf_sequence_t *seqs,
-    int num_sequences,
-    int num_labels,
-    int num_attributes,
+	FILE* fpi,
+	crf_dictionary_t* labels,
+    crf_dictionary_t* attrs,
     floatval_t minfreq,
     crf_logging_callback func,
     void *instance
     )
 {
-    int i, s, t;
     crfvol_feature_t f;
     featureset_t* set = NULL;
     crfvol_features_t *features = NULL;
-    const int N = num_sequences;
-    const int L = num_labels;
     logging_t lg;
+    const iwa_token_t* token = NULL;
+    iwa_t* iwa = NULL;
+    long filesize = 0, begin = 0, offset = 0;
 
     lg.func = func;
     lg.instance = instance;
@@ -291,86 +292,49 @@ crfvol_features_t* crfvol_read_features(
     /* Create an instance of feature set. */
     set = featureset_new();
 
-    /* Loop over the sequences in the training data. */
+    /* Obtain the file size. */
+    begin = ftell(fpi);
+    fseek(fpi, 0, SEEK_END);
+    filesize = ftell(fpi) - begin;
+    fseek(fpi, begin, SEEK_SET);
+
+	/* Loop over the sequences in the training data. */
     logging_progress_start(&lg);
 
-	for (s = 0; s < N; ++s) {
-		int prev = L, cur = 0;
-		const crf_item_t* item = NULL;
-		const crf_sequence_t* seq = &seqs[s];
-		const int T = seq->num_items;
-		uint8_t* label_sequence = (uint8_t*)malloc((T+1) * sizeof(uint8_t));
-		label_sequence[T] = L; /* BOS */
+    while (token = iwa_read(iwa), token != NULL) {
+        /* Progress report. */
+        int offset = ftell(fpi);
+        int current = (int)((offset - begin) * 100.0 / (double)filesize);
+        logging_progress(&lg, current);
 
-		for (t = 0; t < T; ++t) {
-			int a;
-			int label_sequence_pos = T - t - 1;
-			item = &seq->items[t];
-			label_sequence[label_sequence_pos] = item->label;
-
+        switch (token->type) {
+        case IWA_BOI:
+            /* Initialize a feature. */
 			memset(&f, 0, sizeof(f));
-			memcpy(f.label_sequence, &label_sequence[label_sequence_pos], 2);
-			f.order = 2;
-			f.freq = 1;
-			f.attr = item->contents[0].aid;
-			featureset_add(set, &f);
+			f.attr = -1;
+			f.order = 0;
+            break;
+        case IWA_EOI:
+            /* Append the feature to the feature set. */
+			if (f.attr != -1 && f.order != -1) featureset_add(set, &f);
+            break;
+        case IWA_ITEM:
+            if (f.attr == -1) {
+				f.attr = attrs->get(attrs, token->attr);
+            } else {
+				f.label_sequence[f.order] = labels->get(labels, token->attr);
+				f.order++;
+            }
+            break;
+        case IWA_NONE:
+        case IWA_EOF:
+            break;
+        case IWA_COMMENT:
+            break;
+        }
+    }
 
-			f.attr = item->contents[1].aid;
-			featureset_add(set, &f);
-
-			f.attr = item->contents[2].aid;
-			featureset_add(set, &f);
-
-			if (t >= 1) {
-				f.label_sequence[2] = label_sequence[label_sequence_pos+2];
-				f.order = 3;
-				featureset_add(set, &f);
-				
-				f.attr = item->contents[4].aid;
-				featureset_add(set, &f);
-
-				f.attr = item->contents[6].aid;
-				featureset_add(set, &f);
-
-				if (t >= 2) {
-					f.label_sequence[3] = label_sequence[label_sequence_pos+3];
-					f.order = 4;
-					featureset_add(set, &f);
-				}
-			}
-
-			if (t < T-1) { /* t == T-1 : EOS */
-				for (a = 0; a < item->num_contents; ++a) {
-					memset(&f, 0, sizeof(f));
-					f.attr = item->contents[a].aid;
-					f.order = 1;
-					f.label_sequence[0] = label_sequence[label_sequence_pos];
-					f.freq = 1;
-					featureset_add(set, &f);
-				}
-			}
-		}
-		free(label_sequence);
-	}
-	for (i = 0; i < L; ++i) {
-		/* BOS */
-		memset(&f, 0, sizeof(f));
-		f.label_sequence[0] = i;
-		f.label_sequence[1] = L;
-		f.order = 2;
-		f.freq = 0;
-		f.attr = 0;
-		featureset_add(set, &f);
-
-		/* EOS */
-		memset(&f, 0, sizeof(f));
-		f.label_sequence[0] = L;
-		f.label_sequence[1] = i;
-		f.order = 2;
-		f.freq = 0;
-		f.attr = 0;
-		featureset_add(set, &f);
-	}
+	logging_progress_end(&lg);
 
     /* Convert the feature set to an feature array. */
     featureset_generate(features, set, minfreq);

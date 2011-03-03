@@ -120,9 +120,6 @@ void read_data(FILE *fpi, FILE *fpo, crf_data_t* data, crf_dictionary_t* attrs, 
         case IWA_NONE:
         case IWA_EOF:
             /* Put the training instance. */
-			if (lid != -2) { /* EOS : to be overwritten by L */
-				*((int*)0) = 0;
-			}
             crf_data_append(data, &inst);
             crf_sequence_finish(&inst);
             break;
@@ -132,4 +129,5 @@ void read_data(FILE *fpi, FILE *fpo, crf_data_t* data, crf_dictionary_t* attrs, 
     }
     progress(fpo, prev, 100);
     fprintf(fpo, "\n");
+	iwa_delete(iwa);
 }

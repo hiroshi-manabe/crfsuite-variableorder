@@ -180,10 +180,9 @@ crfvol_features_t* crfvol_generate_features(
     );
 
 crfvol_features_t* crfvol_read_features(
-    const crf_sequence_t *seqs,
-    int num_sequences,
-    int num_labels,
-    int num_attributes,
+	FILE* fpi,
+	crf_dictionary_t* labels,
+    crf_dictionary_t* attrs,
     floatval_t minfreq,
     crf_logging_callback func,
     void *instance
