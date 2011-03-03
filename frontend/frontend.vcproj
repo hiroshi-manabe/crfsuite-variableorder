@@ -224,10 +224,6 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\lib\crf\include\esa.hxx"
-				>
-			</File>
-			<File
 				RelativePath=".\iwa.h"
 				>
 			</File>
@@ -241,10 +237,6 @@
 			</File>
 			<File
 				RelativePath=".\readdata.h"
-				>
-			</File>
-			<File
-				RelativePath="..\lib\crf\include\sais.hxx"
 				>
 			</File>
 		</Filter>
