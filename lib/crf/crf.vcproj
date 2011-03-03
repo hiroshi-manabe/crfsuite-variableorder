@@ -17,73 +17,6 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="4"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="$(SolutionDir)include;$(SolutionDir)win32;$(SolutionDir)lib\crf\include;$(SolutionDir)win32\liblbfgs;$(SolutionDir)lib\cqdb\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
-				FloatingPointModel="1"
-				FloatingPointExceptions="true"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="4"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				AdditionalDependencies="lbfgs.lib"
-				AdditionalLibraryDirectories="$(SolutionDir)win32\liblbfgs"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
@@ -148,7 +81,7 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug_C|Win32"
+			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
@@ -252,14 +185,6 @@
 			<File
 				RelativePath=".\src\crfvo_learn.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAs="1"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\src\crfvo_learn_lbfgs.c"
@@ -270,19 +195,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\crfvo_preprocess.c"
-				>
-			</File>
-			<File
-				RelativePath=".\src\crfvo_tag.c"
-				>
-			</File>
-			<File
 				RelativePath=".\crfvo_preprocess.c"
 				>
 			</File>
 			<File
+				RelativePath=".\src\crfvo_preprocess.c"
+				>
+			</File>
+			<File
 				RelativePath=".\crfvo_preprocess.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\crfvo_tag.c"
 				>
 			</File>
 		</Filter>
