@@ -98,7 +98,7 @@ BEGIN_OPTION_MAP(parse_learn_options, learn_option_t)
         opt->evaluation = mystrdup(arg);
 
     ON_OPTION_WITH_ARG(SHORTOPT('f') || LONGOPT("features"))
-        free(opt->evaluation);
+        free(opt->features);
         opt->features = mystrdup(arg);
 
     ON_OPTION(SHORTOPT('h') || LONGOPT("help"))
