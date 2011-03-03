@@ -178,6 +178,7 @@ crfvol_features_t* crfvol_read_features(
 	/* Loop over the sequences in the training data. */
     logging_progress_start(&lg);
 
+	iwa = iwa_reader(fpi);
     while (token = iwa_read(iwa), token != NULL) {
         /* Progress report. */
         int offset = ftell(fpi);
@@ -218,6 +219,8 @@ crfvol_features_t* crfvol_read_features(
 
     /* Delete the feature set. */
     featureset_delete(set);
+
+	iwa_delete(iwa);
 
     return features;
 }

@@ -402,7 +402,7 @@ static int crf_train_train(
     int ret = 0;
     floatval_t sigma = 10, *best_w = NULL;
     crf_sequence_t* seqs = (crf_sequence_t*)instances;
-    crfvol_features_t* features = NULL;
+    crfvol_features_t* features = (crfvol_features_t*)trainer->features;
     crfvol_t *crfvot = (crfvol_t*)trainer->internal;
     crf_params_t *params = crfvot->params;
     crfvol_option_t *opt = &crfvot->opt;
