@@ -169,16 +169,6 @@ typedef struct {
     int*    fids;            /**< Array of feature ids */
 } feature_refs_t;
 
-crfvol_features_t* crfvol_generate_features(
-    const crf_sequence_t *seqs,
-    int num_sequences,
-    int num_labels,
-    int num_attributes,
-    floatval_t minfreq,
-    crf_logging_callback func,
-    void *instance
-    );
-
 crfvol_features_t* crfvol_read_features(
 	FILE* fpi,
 	crf_dictionary_t* labels,
@@ -246,7 +236,6 @@ typedef struct {
 
 typedef struct {
     char*       algorithm;
-    floatval_t    feature_minfreq;
 
     crfvol_lbfgs_option_t   lbfgs;
 } crfvol_option_t;

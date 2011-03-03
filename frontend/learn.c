@@ -46,19 +46,20 @@
 
 
 typedef struct {
-    char *model;
-    char *training;
-    char *evaluation;
+    char* model;
+    char* training;
+	char* features;
+    char* evaluation;
 
     int help;
 
     int num_params;
-    char **params;
+    char** params;
 } learn_option_t;
 
 static char* mystrdup(const char *src)
 {
-    char *dst = (char*)malloc(strlen(src)+1);
+    char* dst = (char*)malloc(strlen(src)+1);
     if (dst != NULL) {
         strcpy(dst, src);
     }
@@ -95,6 +96,10 @@ BEGIN_OPTION_MAP(parse_learn_options, learn_option_t)
     ON_OPTION_WITH_ARG(SHORTOPT('t') || LONGOPT("test"))
         free(opt->evaluation);
         opt->evaluation = mystrdup(arg);
+
+    ON_OPTION_WITH_ARG(SHORTOPT('f') || LONGOPT("features"))
+        free(opt->evaluation);
+        opt->features = mystrdup(arg);
 
     ON_OPTION(SHORTOPT('h') || LONGOPT("help"))
         opt->help = 1;
@@ -277,6 +282,22 @@ int main_learn(int argc, char *argv[], const char *argv0)
     read_data(fp, fpo, &data_train, attrs, labels);
     clk_current = clock();
     if (fp != fpi) fclose(fp);
+
+    /* Open the feature data. */
+    fp = (strcmp(opt.features, "-") == 0) ? fpi : fopen(opt.features, "r");
+    if (fp == NULL) {
+        fprintf(fpe, "ERROR: Failed to open the feature data.\n");
+        ret = 1;
+        goto force_exit;        
+    }
+
+    /* Read the features */
+    fprintf(fpo, "Reading the features\n");
+    clk_begin = clock();
+    trainer->read_features(trainer, fp, attrs, labels);
+    clk_current = clock();
+    if (fp != fpi) fclose(fp);
+
 
     /* Report the statistics of the training data. */
     fprintf(fpo, "Number of instances: %d\n", data_train.num_instances);

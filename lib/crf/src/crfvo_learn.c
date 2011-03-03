@@ -266,10 +266,6 @@ static int crfvol_exchange_options(crf_params_t* params, crfvol_option_t* opt, i
             "algorithm", opt->algorithm, "lbfgs",
             "The training algorithm."
             )
-        DDX_PARAM_FLOAT(
-            "feature.minfreq", opt->feature_minfreq, 0.0,
-            "The minimum frequency of features."
-            )
     END_PARAM_MAP()
 
     crfvol_lbfgs_options(params, opt, mode);
@@ -374,16 +370,12 @@ void crf_train_set_evaluate_callback(crf_trainer_t* trainer, void *instance, crf
 
 static int crf_train_read_features(
 	crf_trainer_t* trainer,
-	const char* filename, 
+	FILE* fpi, 
 	crf_dictionary_t* attrs,
 	crf_dictionary_t* labels
 	)
 {
     crfvol_t *crfvot = (crfvol_t*)trainer->internal;
-	FILE* fpi = fopen(filename, "r");
-	if (fpi == NULL) {
-		return -1;
-	}
 
 	trainer->features = crfvol_read_features(
 		fpi,
@@ -428,23 +420,6 @@ static int crf_train_train(
 
     /* Report the parameters. */
     logging(crfvot->lg, "Training first-order linear-chain CRFs (trainer.crfvo)\n");
-    logging(crfvot->lg, "\n");
-
-    /* Generate features. */
-    logging(crfvot->lg, "Feature generation\n");
-    logging(crfvot->lg, "feature.minfreq: %f\n", opt->feature_minfreq);
-    crfvot->clk_begin = clock();
-    features = crfvol_generate_features(
-        seqs,
-        num_instances,
-        num_labels,
-        num_attributes,
-        opt->feature_minfreq,
-        crfvot->lg->func,
-        crfvot->lg->instance
-        );
-    logging(crfvot->lg, "Number of features: %d\n", features->num_features);
-    logging(crfvot->lg, "Seconds required: %.3f\n", (clock() - crfvot->clk_begin) / (double)CLOCKS_PER_SEC);
     logging(crfvot->lg, "\n");
 
     /* Preparation for training. */
