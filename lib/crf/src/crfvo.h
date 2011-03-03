@@ -179,6 +179,16 @@ crfvol_features_t* crfvol_generate_features(
     void *instance
     );
 
+crfvol_features_t* crfvol_read_features(
+    const crf_sequence_t *seqs,
+    int num_sequences,
+    int num_labels,
+    int num_attributes,
+    floatval_t minfreq,
+    crf_logging_callback func,
+    void *instance
+    );
+
 /* crfvo_model.c */
 struct tag_crfvom;
 typedef struct tag_crfvom crfvom_t;
