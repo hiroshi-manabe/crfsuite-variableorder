@@ -174,6 +174,7 @@ crfvol_features_t* crfvol_read_features(
     iwa_t* iwa = NULL;
     long filesize = 0, begin = 0, offset = 0;
     int prev = 0, current = 0;
+	int L = labels->num(labels);
 
     /* Allocate a feature container. */
     features = (crfvol_features_t*)calloc(1, sizeof(crfvol_features_t));
@@ -186,6 +187,10 @@ crfvol_features_t* crfvol_read_features(
     fseek(fpi, 0, SEEK_END);
     filesize = ftell(fpi) - begin;
     fseek(fpi, begin, SEEK_SET);
+
+    fprintf(fpo, "0");
+    fflush(fpo);
+    prev = 0;
 
 	/* Loop over the sequences in the training data. */
 
@@ -211,7 +216,9 @@ crfvol_features_t* crfvol_read_features(
             if (f.attr == -1) {
 				f.attr = attrs->get(attrs, token->attr);
             } else {
-				f.label_sequence[f.order] = labels->get(labels, token->attr);
+				int label = labels->to_id(labels, token->attr);
+				if (label < 0) label = L;
+				f.label_sequence[f.order] = label;
 				f.order++;
             }
             break;

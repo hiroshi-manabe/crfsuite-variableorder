@@ -197,6 +197,7 @@ int main_learn(int argc, char *argv[], const char *argv0)
     crf_evaluation_t eval;
     crf_trainer_t *trainer = NULL;
     crf_dictionary_t *attrs = NULL, *labels = NULL;
+	int num_features;
 
     /* Initializations. */
     learn_option_init(&opt);
@@ -303,9 +304,12 @@ int main_learn(int argc, char *argv[], const char *argv0)
     /* Read the features */
     fprintf(fpo, "Reading the features\n");
     clk_begin = clock();
-    trainer->read_features(trainer, fp, fpo, attrs, labels);
+    num_features = trainer->read_features(trainer, fp, fpo, attrs, labels);
     clk_current = clock();
     if (fp != fpi) fclose(fp);
+    fprintf(fpo, "Number of features: %d\n", num_features);
+    fprintf(fpo, "Seconds required: %.3f\n",  (clk_current - clk_begin) / (double)CLOCKS_PER_SEC);
+	fprintf(fpo, "\n");
 
 	/* Read a test data if necessary */
     if (opt.evaluation != NULL) {

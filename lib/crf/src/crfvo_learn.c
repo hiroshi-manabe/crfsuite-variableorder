@@ -377,17 +377,16 @@ static int crf_train_read_features(
 	)
 {
     crfvol_t *crfvot = (crfvol_t*)trainer->internal;
-
-	trainer->features = crfvol_read_features(
+	crfvol_features_t* features = crfvol_read_features(
 		fpi,
 		fpo,
 		labels,
 		attrs
 		);
-
 	fclose(fpi);
+	trainer->features = features;
 
-	return 0;
+	return features->num_features;
 }
 
 static int crf_train_train(
