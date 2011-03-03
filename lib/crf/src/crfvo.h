@@ -171,10 +171,9 @@ typedef struct {
 
 crfvol_features_t* crfvol_read_features(
 	FILE* fpi,
+	FILE* fpo,
 	crf_dictionary_t* labels,
-    crf_dictionary_t* attrs,
-    crf_logging_callback func,
-    void *instance
+    crf_dictionary_t* attrs
     );
 
 /* crfvo_model.c */

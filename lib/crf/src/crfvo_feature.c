@@ -143,25 +143,37 @@ static void featureset_generate(crfvol_features_t* features, featureset_t* set)
     }
 }
 
+static int progress(FILE *fpo, int prev, int current)
+{
+    while (prev < current) {
+        ++prev;
+        if (prev % 2 == 0) {
+            if (prev % 10 == 0) {
+                fprintf(fpo, "%d", prev / 10);
+                fflush(fpo);
+            } else {
+                fprintf(fpo, ".", prev / 10);
+                fflush(fpo);
+            }
+        }
+    }
+    return prev;
+}
+
 crfvol_features_t* crfvol_read_features(
 	FILE* fpi,
+	FILE* fpo,
 	crf_dictionary_t* labels,
-    crf_dictionary_t* attrs,
-    crf_logging_callback func,
-    void *instance
+    crf_dictionary_t* attrs
     )
 {
     crfvol_feature_t f;
     featureset_t* set = NULL;
     crfvol_features_t *features = NULL;
-    logging_t lg;
     const iwa_token_t* token = NULL;
     iwa_t* iwa = NULL;
     long filesize = 0, begin = 0, offset = 0;
-
-    lg.func = func;
-    lg.instance = instance;
-    lg.percent = 0;
+    int prev = 0, current = 0;
 
     /* Allocate a feature container. */
     features = (crfvol_features_t*)calloc(1, sizeof(crfvol_features_t));
@@ -176,14 +188,13 @@ crfvol_features_t* crfvol_read_features(
     fseek(fpi, begin, SEEK_SET);
 
 	/* Loop over the sequences in the training data. */
-    logging_progress_start(&lg);
 
 	iwa = iwa_reader(fpi);
     while (token = iwa_read(iwa), token != NULL) {
         /* Progress report. */
         int offset = ftell(fpi);
-        int current = (int)((offset - begin) * 100.0 / (double)filesize);
-        logging_progress(&lg, current);
+        current = (int)((offset - begin) * 100.0 / (double)filesize);
+        prev = progress(fpo, prev, current);
 
         switch (token->type) {
         case IWA_BOI:
@@ -211,16 +222,15 @@ crfvol_features_t* crfvol_read_features(
             break;
         }
     }
+    progress(fpo, prev, 100);
+    fprintf(fpo, "\n");
+	iwa_delete(iwa);
 
-	logging_progress_end(&lg);
-
-    /* Convert the feature set to an feature array. */
+	/* Convert the feature set to an feature array. */
     featureset_generate(features, set);
 
     /* Delete the feature set. */
     featureset_delete(set);
 
-	iwa_delete(iwa);
-
-    return features;
+	return features;
 }

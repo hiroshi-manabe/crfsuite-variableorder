@@ -370,7 +370,8 @@ void crf_train_set_evaluate_callback(crf_trainer_t* trainer, void *instance, crf
 
 static int crf_train_read_features(
 	crf_trainer_t* trainer,
-	FILE* fpi, 
+	FILE* fpi,
+	FILE* fpo,
 	crf_dictionary_t* attrs,
 	crf_dictionary_t* labels
 	)
@@ -379,10 +380,9 @@ static int crf_train_read_features(
 
 	trainer->features = crfvol_read_features(
 		fpi,
+		fpo,
 		labels,
-		attrs,
-        crfvot->lg->func,
-        crfvot->lg->instance
+		attrs
 		);
 
 	fclose(fpi);

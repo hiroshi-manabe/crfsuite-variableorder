@@ -303,7 +303,7 @@ int main_learn(int argc, char *argv[], const char *argv0)
     /* Read the features */
     fprintf(fpo, "Reading the features\n");
     clk_begin = clock();
-    trainer->read_features(trainer, fp, attrs, labels);
+    trainer->read_features(trainer, fp, fpo, attrs, labels);
     clk_current = clock();
     if (fp != fpi) fclose(fp);
 
