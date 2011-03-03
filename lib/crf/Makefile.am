@@ -21,15 +21,15 @@ libcrf_la_SOURCES = \
 	src/rumavl.h \
 	src/mt19937ar.c \
 	src/mt19937ar.h \
-	src/crf1m.c \
-	src/crf1m.h \
-	src/crf1m_context.c \
-	src/crf1m_feature.c \
-	src/crf1m_learn.c \
-	src/crf1m_learn_lbfgs.c \
-	src/crf1m_learn_sgd.c \
-	src/crf1m_model.c \
-	src/crf1m_tag.c \
+	src/crfvo.c \
+	src/crfvo.h \
+	src/crfvo_context.c \
+	src/crfvo_feature.c \
+	src/crfvo_learn.c \
+	src/crfvo_learn_lbfgs.c \
+	src/crfvo_model.c \
+	src/crfvo_preprocess.c \
+	src/crfvo_tag.c \
 	src/crf.c
 
 libcrf_la_CFLAGS = -I./include -I$(top_builddir)/lib/cqdb/include 
