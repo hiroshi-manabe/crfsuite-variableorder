@@ -101,7 +101,7 @@ void read_data(FILE *fpi, FILE *fpo, crf_data_t* data, crf_dictionary_t* attrs, 
             break;
         case IWA_ITEM:
             if (lid == -1) {
-				if (!strcmp(token->attr, "__EOS__")) {
+				if (!strcmp(token->attr, "__BOS_EOS__")) {
 					lid = -2; /* EOS : to be overwritten by L */
 				} else {
 					lid = labels->get(labels, token->attr);
