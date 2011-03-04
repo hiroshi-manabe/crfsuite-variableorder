@@ -1,5 +1,9 @@
-                               CRFsuite
-                              Version 0.11
+                 CRFsuite (variable-order Markov model)
+                           Version 0.01
+                         http://vocrf.net/
+                            based on
+                            CRFsuite
+                           Version 0.11
                  http://www.chokkan.org/software/crfsuite/
 
 
@@ -177,6 +181,4 @@ Olivier Grisel
 Andreas Holzbach
 Baoli Li
 Yoshimasa Tsuruoka
-Hiroshi Manabe
-
 
