@@ -189,7 +189,6 @@ struct tag_crf_trainer {
      * Pointer to the instance data (internal use only).
      */
     void* internal;
-	void* features;
     
     /**
      * Reference counter (internal use only).
@@ -212,7 +211,6 @@ struct tag_crf_trainer {
     void (*set_evaluate_callback)(crf_trainer_t* trainer, void* instance, crf_evaluate_callback cbe);
 
 	int (*add_feature)(crf_trainer_t* trainer, int attr, int order, unsigned char label_sequence[]);
-	int (*read_features)(crf_trainer_t* trainer, FILE* fpi, FILE* fpo, crf_dictionary_t* attrs, crf_dictionary_t* labels);
     int (*train)(crf_trainer_t* trainer, void* instances, int num_instances, int num_labels, int num_attributes);
     int (*save)(crf_trainer_t* trainer, const char *filename, crf_dictionary_t* attrs, crf_dictionary_t* labels);
 };

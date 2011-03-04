@@ -160,6 +160,8 @@ typedef struct {
     crfvol_feature_t*    features;        /**< Array of features. */
 } crfvol_features_t;
 
+void crfvol_features_delete(crfvol_features_t* features);
+
 /**
  * Feature references.
  *    This is a collection of feature ids used for faster accesses.
@@ -176,13 +178,6 @@ typedef struct tag_featureset featureset_t;
 featureset_t* featureset_new();
 void featureset_generate(crfvol_features_t* features, featureset_t* set);
 void featureset_delete(featureset_t* set);
-
-crfvol_features_t* crfvol_read_features(
-	FILE* fpi,
-	FILE* fpo,
-	crf_dictionary_t* labels,
-    crf_dictionary_t* attrs
-    );
 
 int crfvol_add_feature(
 	featureset_t* featureset,

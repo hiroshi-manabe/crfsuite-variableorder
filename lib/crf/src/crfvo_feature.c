@@ -46,8 +46,6 @@
 #include "crfvo.h"
 #include "rumavl.h"    /* AVL tree library necessary for feature generation. */
 
-#include "../../../frontend/iwa.h"
-
 /**
  * Feature set.
  */
@@ -142,6 +140,15 @@ void featureset_generate(crfvol_features_t* features, featureset_t* set)
     }
 }
 
+void crfvol_features_delete(crfvol_features_t* features)
+{
+	if (features) {
+		free(features->features);
+	}
+	free(features);
+}
+
+
 static int progress(FILE *fpo, int prev, int current)
 {
     while (prev < current) {
@@ -178,86 +185,4 @@ int crfvol_add_feature(
 	ret = featureset_add(featureset, &f);
 	if (ret < 0) return ret;
 	return featureset->num;
-}
-
-crfvol_features_t* crfvol_read_features(
-	FILE* fpi,
-	FILE* fpo,
-	crf_dictionary_t* labels,
-    crf_dictionary_t* attrs
-    )
-{
-    crfvol_feature_t f;
-    featureset_t* set = NULL;
-    crfvol_features_t *features = NULL;
-    const iwa_token_t* token = NULL;
-    iwa_t* iwa = NULL;
-    long filesize = 0, begin = 0, offset = 0;
-    int prev = 0, current = 0;
-	int L = labels->num(labels);
-
-    /* Allocate a feature container. */
-    features = (crfvol_features_t*)calloc(1, sizeof(crfvol_features_t));
-
-    /* Create an instance of feature set. */
-    set = featureset_new();
-
-    /* Obtain the file size. */
-    begin = ftell(fpi);
-    fseek(fpi, 0, SEEK_END);
-    filesize = ftell(fpi) - begin;
-    fseek(fpi, begin, SEEK_SET);
-
-    fprintf(fpo, "0");
-    fflush(fpo);
-    prev = 0;
-
-	/* Loop over the sequences in the training data. */
-
-	iwa = iwa_reader(fpi);
-    while (token = iwa_read(iwa), token != NULL) {
-        /* Progress report. */
-        int offset = ftell(fpi);
-        current = (int)((offset - begin) * 100.0 / (double)filesize);
-        prev = progress(fpo, prev, current);
-
-        switch (token->type) {
-        case IWA_BOI:
-            /* Initialize a feature. */
-			memset(&f, 0, sizeof(f));
-			f.attr = -1;
-			f.order = 0;
-            break;
-        case IWA_EOI:
-            /* Append the feature to the feature set. */
-			if (f.attr != -1 && f.order != -1) featureset_add(set, &f);
-            break;
-        case IWA_ITEM:
-            if (f.attr == -1) {
-				f.attr = attrs->get(attrs, token->attr);
-            } else {
-				int label = labels->to_id(labels, token->attr);
-				if (label < 0) label = L;
-				f.label_sequence[f.order] = label;
-				f.order++;
-            }
-            break;
-        case IWA_NONE:
-        case IWA_EOF:
-            break;
-        case IWA_COMMENT:
-            break;
-        }
-    }
-    progress(fpo, prev, 100);
-    fprintf(fpo, "\n");
-	iwa_delete(iwa);
-
-	/* Convert the feature set to an feature array. */
-    featureset_generate(features, set);
-
-    /* Delete the feature set. */
-    featureset_delete(set);
-
-	return features;
 }

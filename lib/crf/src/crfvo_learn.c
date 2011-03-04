@@ -388,27 +388,6 @@ static int crf_train_add_feature(
 		);
 }
 
-static int crf_train_read_features(
-	crf_trainer_t* trainer,
-	FILE* fpi,
-	FILE* fpo,
-	crf_dictionary_t* attrs,
-	crf_dictionary_t* labels
-	)
-{
-    crfvol_t *crfvot = (crfvol_t*)trainer->internal;
-	crfvol_features_t* features = crfvol_read_features(
-		fpi,
-		fpo,
-		labels,
-		attrs
-		);
-	fclose(fpi);
-	trainer->features = features;
-
-	return features->num_features;
-}
-
 static int crf_train_train(
     crf_trainer_t* trainer,
     void* instances,
@@ -658,11 +637,7 @@ static int crf_train_release(crf_trainer_t* trainer)
     if (count == 0) {
 		crfvol_t* crfvot = (crfvol_t*)trainer->internal;
 		if (crfvot->preprocessor) crfvopp_delete(crfvot->preprocessor);
-
-		if (trainer->features) {
-			free(trainer->features);
-			trainer->features = 0;
-		}
+		if (crfvot->features) free(crfvot->features);
     }
     return count;
 }
@@ -691,7 +666,6 @@ int crfvol_create_instance(const char *interface, void **ptr)
         trainer->set_evaluate_callback = crf_train_set_evaluate_callback;
 
 		trainer->add_feature = crf_train_add_feature;
-		trainer->read_features = crf_train_read_features;
         trainer->train = crf_train_train;
         trainer->save = crf_train_save;
         trainer->internal = crfvol_new();
