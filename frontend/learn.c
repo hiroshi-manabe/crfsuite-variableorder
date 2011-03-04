@@ -78,6 +78,7 @@ static void learn_option_finish(learn_option_t* opt)
     int i;
 
     free(opt->model);
+	free(opt->features);
     free(opt->training);
     free(opt->evaluation);
 
@@ -118,6 +119,7 @@ static void show_usage(FILE *fp, const char *argv0, const char *command)
     fprintf(fp, "If argument DATA is omitted or '-', this utility reads a data from STDIN.\n");
     fprintf(fp, "\n");
     fprintf(fp, "OPTIONS:\n");
+    fprintf(fp, "    -f, --features=FEATURES   Designate a file to read features from [Required] (FEATURES)\n");
     fprintf(fp, "    -m, --model=MODEL   Store the obtained model in a file (MODEL)\n");
     fprintf(fp, "    -t, --test=TEST     Report the performance of the model on a data (TEST)\n");
     fprintf(fp, "    -p, --param=NAME=VALUE  Set the parameter NAME to VALUE\n");
@@ -217,6 +219,13 @@ int main_learn(int argc, char *argv[], const char *argv0)
         show_usage(fpo, argv0, command);
         goto force_exit;
     }
+
+	/* Make sure that -f or --features option is provided. */
+	if (opt.features == NULL) {
+        fprintf(fpe, "ERROR: You have to designate a file to read features from.\n");
+        show_usage(fpo, argv0, command);
+        goto force_exit;
+	}
 
     /* Set a training file. */
     if (arg_used < argc) {
