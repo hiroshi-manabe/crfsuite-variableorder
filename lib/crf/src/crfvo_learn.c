@@ -199,7 +199,7 @@ void crfvol_preprocess(
 	)
 {
 	int i;
-	logging(trainer->lg, "Compiling...\n");
+	logging(trainer->lg, "Preprocessing...\n");
 	logging_progress_start(trainer->lg);
 
 	for (i = 0; i < trainer->num_sequences; ++i) {
