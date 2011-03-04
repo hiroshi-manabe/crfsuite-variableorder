@@ -132,7 +132,7 @@ void read_data(FILE *fpi, FILE *fpo, crf_data_t* data, crf_dictionary_t* attrs, 
 	iwa_delete(iwa);
 }
 
-void read_features(
+int read_features(
 	FILE* fpi,
 	FILE* fpo,
 	crf_dictionary_t* labels,
@@ -149,6 +149,7 @@ void read_features(
 	int order = 0;
 	unsigned char* label_sequence;
 	int max_order = 256;
+	int ret = 0;
 
 	label_sequence = calloc(max_order, sizeof(unsigned char));
 
@@ -180,7 +181,7 @@ void read_features(
             break;
         case IWA_EOI:
             /* Append the feature to the feature set. */
-			if (attr != -1 && order != -1) trainer->add_feature(trainer, attr, order, label_sequence);
+			if (attr != -1 && order != -1) ret = trainer->add_feature(trainer, attr, order, label_sequence);
             break;
         case IWA_ITEM:
             if (attr == -1) {
@@ -192,7 +193,7 @@ void read_features(
 					unsigned char* t = realloc(label_sequence, max_order * 2);
 					if (t == 0) {
 						free(label_sequence);
-						return;
+						return CRFERR_OUTOFMEMORY;
 					}
 					label_sequence = t;
 				}
@@ -212,5 +213,5 @@ void read_features(
 	iwa_delete(iwa);
 
 	free(label_sequence);
-	return;
+	return ret;
 }

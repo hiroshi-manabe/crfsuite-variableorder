@@ -166,7 +166,7 @@ int crfvol_add_feature(
 	unsigned char label_sequence[]
 	)
 {
-	int i;
+	int i, ret;
     crfvol_feature_t f;
 
 	memset(&f, 0, sizeof(f));
@@ -175,7 +175,9 @@ int crfvol_add_feature(
 	for (i = 0; i < order; ++i) {
 		f.label_sequence[i] = label_sequence[i];
 	}
-	return featureset_add(featureset, &f);
+	ret = featureset_add(featureset, &f);
+	if (ret < 0) return ret;
+	return featureset->num;
 }
 
 crfvol_features_t* crfvol_read_features(
