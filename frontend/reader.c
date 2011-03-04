@@ -131,3 +131,86 @@ void read_data(FILE *fpi, FILE *fpo, crf_data_t* data, crf_dictionary_t* attrs, 
     fprintf(fpo, "\n");
 	iwa_delete(iwa);
 }
+
+void read_features(
+	FILE* fpi,
+	FILE* fpo,
+	crf_dictionary_t* labels,
+    crf_dictionary_t* attrs,
+	crf_trainer_t* trainer
+    )
+{
+    const iwa_token_t* token = NULL;
+    iwa_t* iwa = NULL;
+    long filesize = 0, begin = 0, offset = 0;
+    int prev = 0, current = 0;
+	int L = labels->num(labels);
+	int attr = -1;
+	int order = 0;
+	unsigned char* label_sequence;
+	int max_order = 256;
+
+	label_sequence = calloc(max_order, sizeof(unsigned char));
+
+    /* Obtain the file size. */
+    begin = ftell(fpi);
+    fseek(fpi, 0, SEEK_END);
+    filesize = ftell(fpi) - begin;
+    fseek(fpi, begin, SEEK_SET);
+
+    fprintf(fpo, "0");
+    fflush(fpo);
+    prev = 0;
+
+	/* Loop over the sequences in the training data. */
+
+	iwa = iwa_reader(fpi);
+    while (token = iwa_read(iwa), token != NULL) {
+        /* Progress report. */
+        int offset = ftell(fpi);
+        current = (int)((offset - begin) * 100.0 / (double)filesize);
+        prev = progress(fpo, prev, current);
+
+        switch (token->type) {
+        case IWA_BOI:
+            /* Initialize a feature. */
+			memset(label_sequence, 0, max_order * sizeof(unsigned char));
+			attr = -1;
+			order = 0;
+            break;
+        case IWA_EOI:
+            /* Append the feature to the feature set. */
+			if (attr != -1 && order != -1) trainer->add_feature(trainer, attr, order, label_sequence);
+            break;
+        case IWA_ITEM:
+            if (attr == -1) {
+				attr = attrs->get(attrs, token->attr);
+            } else {
+				int label = labels->to_id(labels, token->attr);
+				if (label < 0) label = L;
+				if (order >= max_order) {
+					unsigned char* t = realloc(label_sequence, max_order * 2);
+					if (t == 0) {
+						free(label_sequence);
+						return;
+					}
+					label_sequence = t;
+				}
+				label_sequence[order] = label;
+				order++;
+            }
+            break;
+        case IWA_NONE:
+        case IWA_EOF:
+            break;
+        case IWA_COMMENT:
+            break;
+        }
+    }
+    progress(fpo, prev, 100);
+    fprintf(fpo, "\n");
+	iwa_delete(iwa);
+
+	free(label_sequence);
+	return;
+}
