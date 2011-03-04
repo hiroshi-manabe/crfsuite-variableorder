@@ -208,9 +208,10 @@ struct tag_crf_trainer {
 
     crf_params_t* (*params)(crf_trainer_t* trainer);
 
-    void (*set_message_callback)(crf_trainer_t* trainer, void *instance, crf_logging_callback cbm);
-    void (*set_evaluate_callback)(crf_trainer_t* trainer, void *instance, crf_evaluate_callback cbe);
+    void (*set_message_callback)(crf_trainer_t* trainer, void* instance, crf_logging_callback cbm);
+    void (*set_evaluate_callback)(crf_trainer_t* trainer, void* instance, crf_evaluate_callback cbe);
 
+	int (*add_feature)(crf_trainer_t* trainer, int attr, int order, unsigned char label_sequence[]);
 	int (*read_features)(crf_trainer_t* trainer, FILE* fpi, FILE* fpo, crf_dictionary_t* attrs, crf_dictionary_t* labels);
     int (*train)(crf_trainer_t* trainer, void* instances, int num_instances, int num_labels, int num_attributes);
     int (*save)(crf_trainer_t* trainer, const char *filename, crf_dictionary_t* attrs, crf_dictionary_t* labels);

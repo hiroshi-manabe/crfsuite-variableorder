@@ -296,8 +296,10 @@ crfvol_t* crfvol_new()
 {
     crfvol_t* trainer = (crfvol_t*)calloc(1, sizeof(crfvol_t));
     trainer->lg = (logging_t*)calloc(1, sizeof(logging_t));
+	trainer->featureset = featureset_new();
 	trainer->exp_weight = 0;
 	trainer->preprocessor = 0;
+	trainer->features = 0;
 
     /* Create an instance for CRF parameters. */
     trainer->params = params_create_instance();
@@ -366,6 +368,22 @@ void crf_train_set_evaluate_callback(crf_trainer_t* trainer, void *instance, crf
     crfvol_t *crfvot = (crfvol_t*)trainer->internal;
     crfvot->cbe_instance = instance;
     crfvot->cbe_proc = cbe;
+}
+
+static int crf_train_add_feature(
+	crf_trainer_t* trainer,
+	int attr,
+	int order,
+	unsigned char label_sequence[]
+	)
+{
+    crfvol_t *crfvot = (crfvol_t*)trainer->internal;
+	return crfvol_add_feature(
+		crfvot->featureset,
+		attr,
+		order,
+		label_sequence
+		);
 }
 
 static int crf_train_read_features(
@@ -665,6 +683,7 @@ int crfvol_create_instance(const char *interface, void **ptr)
         trainer->set_message_callback = crf_train_set_message_callback;
         trainer->set_evaluate_callback = crf_train_set_evaluate_callback;
 
+		trainer->add_feature = crf_train_add_feature;
 		trainer->read_features = crf_train_read_features;
         trainer->train = crf_train_train;
         trainer->save = crf_train_save;

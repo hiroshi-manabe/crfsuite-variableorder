@@ -51,11 +51,10 @@
 /**
  * Feature set.
  */
-typedef struct {
+struct tag_featureset {
     RUMAVL* avl;    /**< Root node of the AVL tree. */
     int num;        /**< Number of features in the AVL tree. */
-} featureset_t;
-
+};
 
 #define    COMP(a, b)    ((a)>(b))-((a)<(b))
 
@@ -79,7 +78,7 @@ static int featureset_comp(const void *x, const void *y, size_t n, void *udata)
     return ret;
 }
 
-static featureset_t* featureset_new()
+featureset_t* featureset_new()
 {
     featureset_t* set = NULL;
     set = (featureset_t*)calloc(1, sizeof(featureset_t));
@@ -158,6 +157,25 @@ static int progress(FILE *fpo, int prev, int current)
         }
     }
     return prev;
+}
+
+int crfvol_add_feature(
+	featureset_t* featureset,
+	int attr,
+	int order,
+	unsigned char label_sequence[]
+	)
+{
+	int i;
+    crfvol_feature_t f;
+
+	memset(&f, 0, sizeof(f));
+	f.attr = attr;
+	f.order = order;
+	for (i = 0; i < order; ++i) {
+		f.label_sequence[i] = label_sequence[i];
+	}
+	return featureset_add(featureset, &f);
 }
 
 crfvol_features_t* crfvol_read_features(

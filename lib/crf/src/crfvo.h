@@ -169,12 +169,26 @@ typedef struct {
     int*    fids;            /**< Array of feature ids */
 } feature_refs_t;
 
+/* Featureset. Used in the process of creating features. */
+struct tag_featureset;
+typedef struct tag_featureset featureset_t;
+
+featureset_t* featureset_new();
+
 crfvol_features_t* crfvol_read_features(
 	FILE* fpi,
 	FILE* fpo,
 	crf_dictionary_t* labels,
     crf_dictionary_t* attrs
     );
+
+int crfvol_add_feature(
+	featureset_t* featureset,
+	int attr,
+	int order,
+	unsigned char label_sequence[]
+	);
+
 
 /* crfvo_model.c */
 struct tag_crfvom;
@@ -292,7 +306,8 @@ struct tag_crfvol {
      * Feature array.
      *    Elements must be sorted by type, src, and dst in this order.
      */
-    crfvol_feature_t *features;
+    crfvol_feature_t* features;
+	featureset_t* featureset; /* Used in the process of creating features. */
 
     floatval_t *w;            /**< Array of w (feature weights) */
 	floatval_t *exp_weight;
