@@ -33,6 +33,9 @@
 #ifndef    __READDATA_H__
 #define    __READDATA_H__
 
+#include <crfsuite.h>
+
 void read_data(FILE *fpi, FILE *fpo, crf_data_t* data, crf_dictionary_t* attrs, crf_dictionary_t* labels);
+int read_features(FILE* fpi, FILE* fpo, crf_dictionary_t* labels, crf_dictionary_t* attrs, crf_trainer_t* trainer);
 
 #endif/*__READDATA_H__*/

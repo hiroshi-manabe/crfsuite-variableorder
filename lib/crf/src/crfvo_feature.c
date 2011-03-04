@@ -94,7 +94,7 @@ featureset_t* featureset_new()
     return set;
 }
 
-static void featureset_delete(featureset_t* set)
+void featureset_delete(featureset_t* set)
 {
     if (set != NULL) {
         rumavl_destroy(set->avl);
@@ -117,7 +117,7 @@ static int featureset_add(featureset_t* set, const crfvol_feature_t* f)
     return 0;
 }
 
-static void featureset_generate(crfvol_features_t* features, featureset_t* set)
+void featureset_generate(crfvol_features_t* features, featureset_t* set)
 {
     int n = 0, k = 0;
     RUMAVL_NODE *node = NULL;

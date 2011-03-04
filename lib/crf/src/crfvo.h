@@ -174,6 +174,8 @@ struct tag_featureset;
 typedef struct tag_featureset featureset_t;
 
 featureset_t* featureset_new();
+void featureset_generate(crfvol_features_t* features, featureset_t* set);
+void featureset_delete(featureset_t* set);
 
 crfvol_features_t* crfvol_read_features(
 	FILE* fpi,

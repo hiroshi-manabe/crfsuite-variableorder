@@ -167,8 +167,9 @@ int crfvol_prepare(
     }
 
     /* Initialization for features and their weights. */
-    trainer->features = features->features;
-    trainer->num_features = features->num_features;
+
+	trainer->features = features->features;
+	trainer->num_features = features->num_features;
     trainer->w = (floatval_t*)calloc(trainer->num_features, sizeof(floatval_t));
     if (trainer->w == NULL) {
         ret = CRFERR_OUTOFMEMORY;
@@ -315,6 +316,7 @@ void crfvol_delete(crfvol_t* trainer)
         free(trainer->lg);
 		free(trainer->exp_weight);
 		if (trainer->preprocessor) crfvopp_delete(trainer->preprocessor);
+		if (trainer->featureset) featureset_delete(trainer->featureset);
     }
 	free(trainer);
 }
@@ -419,10 +421,14 @@ static int crf_train_train(
     int ret = 0;
     floatval_t sigma = 10, *best_w = NULL;
     crf_sequence_t* seqs = (crf_sequence_t*)instances;
-    crfvol_features_t* features = (crfvol_features_t*)trainer->features;
+    crfvol_features_t* features = (crfvol_features_t*)malloc(sizeof(crfvol_features_t));
     crfvol_t *crfvot = (crfvol_t*)trainer->internal;
     crf_params_t *params = crfvot->params;
     crfvol_option_t *opt = &crfvot->opt;
+
+    featureset_generate(features, crfvot->featureset);
+	featureset_delete(crfvot->featureset);
+	crfvot->featureset = 0;
 
     /* Obtain the maximum number of items. */
     max_item_length = 0;
@@ -463,6 +469,7 @@ static int crf_train_train(
         return CRFERR_INTERNAL_LOGIC;
     }
 
+	free(features);
     return ret;
 }
 
