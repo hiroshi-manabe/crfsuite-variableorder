@@ -293,14 +293,6 @@ int main_learn(int argc, char *argv[], const char *argv0)
     clk_current = clock();
     if (fp != fpi) fclose(fp);
 
-    /* Open the feature data. */
-    fp = (strcmp(opt.features, "-") == 0) ? fpi : fopen(opt.features, "r");
-    if (fp == NULL) {
-        fprintf(fpe, "ERROR: Failed to open the feature data.\n");
-        ret = 1;
-        goto force_exit;        
-    }
-
     /* Report the statistics of the training data. */
     fprintf(fpo, "Number of instances: %d\n", data_train.num_instances);
     fprintf(fpo, "Total number of items: %d\n", crf_data_totalitems(&data_train));
@@ -309,16 +301,6 @@ int main_learn(int argc, char *argv[], const char *argv0)
     fprintf(fpo, "Seconds required: %.3f\n", (clk_current - clk_begin) / (double)CLOCKS_PER_SEC);
     fprintf(fpo, "\n");
     fflush(fpo);
-
-    /* Read the features */
-    fprintf(fpo, "Reading the features\n");
-    clk_begin = clock();
-    num_features = trainer->read_features(trainer, fp, fpo, attrs, labels);
-    clk_current = clock();
-    if (fp != fpi) fclose(fp);
-    fprintf(fpo, "Number of features: %d\n", num_features);
-    fprintf(fpo, "Seconds required: %.3f\n",  (clk_current - clk_begin) / (double)CLOCKS_PER_SEC);
-	fprintf(fpo, "\n");
 
 	/* Read a test data if necessary */
     if (opt.evaluation != NULL) {
@@ -344,6 +326,24 @@ int main_learn(int argc, char *argv[], const char *argv0)
         fflush(fpo);
 		crf_data_set_num_labels(&data_test, labels->num(labels));
     }
+
+    /* Open the feature data. */
+    fp = (strcmp(opt.features, "-") == 0) ? fpi : fopen(opt.features, "r");
+    if (fp == NULL) {
+        fprintf(fpe, "ERROR: Failed to open the feature data.\n");
+        ret = 1;
+        goto force_exit;        
+    }
+
+    /* Read the features */
+    fprintf(fpo, "Reading the features\n");
+    clk_begin = clock();
+    num_features = trainer->read_features(trainer, fp, fpo, attrs, labels);
+    clk_current = clock();
+    if (fp != fpi) fclose(fp);
+    fprintf(fpo, "Number of features: %d\n", num_features);
+    fprintf(fpo, "Seconds required: %.3f\n",  (clk_current - clk_begin) / (double)CLOCKS_PER_SEC);
+	fprintf(fpo, "\n");
 
     /* Fill the supplementary information for the data. */
     crf_data_set_num_labels(&data_train, labels->num(labels));
