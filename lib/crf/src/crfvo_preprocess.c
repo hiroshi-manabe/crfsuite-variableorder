@@ -445,7 +445,7 @@ void crfvopp_preprocess_sequence(
 		trie_get_preprocessed_data(
 			&trie_array[t],
 			&trie_array[t-1],
-			&((crfvopd_t*)item->preprocessed_data),
+			(crfvopd_t**)&(item->preprocessed_data),
 			&(label_sequence[T-t-1]),
 			t+2
 			);
