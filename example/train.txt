@@ -14,5 +14,5 @@ IN	by
 DT	an
 JJ	empty
 NN	line
-.
+.	.
 
