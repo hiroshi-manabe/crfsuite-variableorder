@@ -2,7 +2,7 @@ import sys, re
 
 order_list = [[0, 1], [0, 1], [0, 1, 2], [0], [0, 2], [0], [0, 2, 3]]
 
-def output_features(f_out, seq, max_order_list, feature_map):
+def output_data(f_out, seq, max_order_list, feature_map, generate_features):
     filler_length = 10
     length = len(seq)
     seq = [['', '']] * filler_length + seq
@@ -38,12 +38,13 @@ def output_features(f_out, seq, max_order_list, feature_map):
         f_out.write(encode('%s\t%s\n' % (seq[i][0], '\t'.join(fs))))
 
         label_seq.append(seq[i][0])
-        for attr_num in range(len(fs)):
-            if fs[attr_num] not in feature_map:
-                feature_map[fs[attr_num]] = set()
-            for j in order_list[attr_num] if attr_num < len(order_list) else range(1):
-                if (i - filler_length) - j >= -1:
-                    feature_map[fs[attr_num]].add(tuple(label_seq[:-j-2:-1]))
+        if generate_features:
+            for attr_num in range(len(fs)):
+                if fs[attr_num] not in feature_map:
+                    feature_map[fs[attr_num]] = set()
+                for j in order_list[attr_num] if attr_num < len(order_list) else range(1):
+                    if (i - filler_length) - j >= -1:
+                        feature_map[fs[attr_num]].add(tuple(label_seq[:-j-2:-1]))
 
     f_out.write('\n')
 
@@ -53,32 +54,30 @@ def encode(x):
     x = x.replace('#', '\\#')
     return x
 
-filenames = {
-    'train' : 'train.txt',
-    'dev' : 'dev.txt',
-    'test' : 'test.txt'
+filename_dics = {
+    'train' : {
+        'in' : 'train.txt',
+        'out' : 'train_data.txt',
+        'generate_features' : True
+        },
+    'test' : {
+        'in' : 'test.txt',
+        'out' : 'test_data.txt',
+        'generate_features' : False
+        },
 }
 
-sentence_nums = {
-    'train' : 0,
-    'dev' : 0,
-    'test' : 0
-}
+filename_features = 'features.txt'
+feature_map = {}
 
-if len(sys.argv) == 4:
-    sentence_nums['train'] = int(sys.argv[1])
-    sentence_nums['dev'] = int(sys.argv[2])
-    sentence_nums['test'] = int(sys.argv[3])
-
-for (mode, filename) in filenames.iteritems():
-    print filename + '\n'
-    out_filename = filename.replace('.', '_data.')
-    feature_out_filename = filename.replace('.', '_features.')
-    f_in = open(filename, 'r')
-    f_out = open(out_filename, 'w')
+for (mode, filename_dic) in filename_dics.iteritems():
+    if 'in' not in filename_dic or 'out' not in filename_dic:
+        raise 'You must provide filenames for both input and output.'
+    print filename_dic['in'] + '\n'
+    f_in = open(filename_dic['in'], 'r')
+    f_out = open(filename_dic['out'], 'w')
     seq = []
     sentence_num = 0
-    feature_map = {}
     label_set = set()
 
     for line in f_in:
@@ -86,10 +85,8 @@ for (mode, filename) in filenames.iteritems():
 
         if len(line) == 0:
             seq.append(['__BOS_EOS__', '__BOS_EOS__'])
-            output_features(f_out, seq, order_list, feature_map)
+            output_data(f_out, seq, order_list, feature_map, filename_dic['generate_features'])
             seq = []
-            sentence_num += 1
-            if sentence_nums[mode] > 0 and sentence_num >= sentence_nums[mode] : break
         else:
             label_and_word = line.split('\t')
             seq.append(label_and_word)
@@ -98,14 +95,14 @@ for (mode, filename) in filenames.iteritems():
     f_in.close()
     f_out.close()
 
-    for label in label_set:
-        feature_map['LABEL'].add(('__BOS_EOS__', label))
-        feature_map['LABEL'].add((label, '__BOS_EOS__'))
+for label in label_set:
+    feature_map['LABEL'].add(('__BOS_EOS__', label))
+    feature_map['LABEL'].add((label, '__BOS_EOS__'))
 
-    f_feature_out = open(feature_out_filename, 'w')
-    for attr in feature_map:
-        for label_seq in feature_map[attr]:
-            f_feature_out.write(encode('%s\t%s\n' % (attr, '\t'.join(label_seq))))
-    f_feature_out.close()
+f_feature_out = open(filename_features, 'w')
+for attr in feature_map:
+    for label_seq in feature_map[attr]:
+        f_feature_out.write(encode('%s\t%s\n' % (attr, '\t'.join(label_seq))))
+f_feature_out.close()
 
 

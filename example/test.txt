@@ -1,0 +1,18 @@
+DT	This
+VBZ	is
+DT	the
+NN	test
+NN	data
+NN	set
+.	.
+
+NNS	Sentences
+MD	must
+VB	be
+VBN	followed
+IN	by
+DT	an
+JJ	empty
+NN	line
+.
+
