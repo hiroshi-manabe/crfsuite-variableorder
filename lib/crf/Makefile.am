@@ -27,8 +27,8 @@ libcrf_la_SOURCES = \
 	src/crfvo_feature.c \
 	src/crfvo_learn.c \
 	src/crfvo_learn_lbfgs.c \
-	src/crfvo_model.c \
 	src/crfvo_preprocess.c \
+	src/crfvo_model.c \
 	src/crfvo_tag.c \
 	src/crf.c
 
