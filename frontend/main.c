@@ -38,7 +38,7 @@
 #include "option.h"
 
 #define    APPLICATION_S    "CRFsuite for variable order Markov models"
-#define    VERSION_S        "0.11"
+#define    VERSION_S        "0.01"
 #define    COPYRIGHT_S      "Copyright (c) 2007-2010 Naoaki Okazaki, 2011 Hiroshi Manabe"
 
 
