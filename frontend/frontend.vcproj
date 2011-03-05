@@ -140,6 +140,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalOptions=" &quot;..\release\crf.lib&quot; &quot;..\release\cqdb.lib&quot;"
 				OutputFile="$(OutDir)\crfsuite.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
