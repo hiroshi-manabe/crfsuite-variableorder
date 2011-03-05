@@ -37,9 +37,6 @@
 #include <crfsuite.h>
 #include "crfvo.h"
 
-struct tag_buffer_manager;
-typedef struct tag_buffer_manager buffer_manager_t;
-
 crfvopd_t* crfvopd_new(int L, int num_paths, int num_fids)
 {
 	crfvopd_t* pd = (crfvopd_t*)calloc(1, sizeof(crfvopd_t));	
