@@ -1,5 +1,5 @@
 2011-03-05  Hiroshi Manabe <t_takeda25@hotmail.com>
-	* CRFSuite (variable order Markov model) 0.01
+	* CRFSuite for variable order Markov models 0.01
 	- Supported variable order Markov models instead of 1st-order ones.
 
 2010-07-16  Naoaki Okazaki  <okazaki at chokkan org>
