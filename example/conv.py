@@ -1,6 +1,6 @@
 import sys, re
 
-order_list = [[0, 1], [0, 1], [0, 1, 2], [0], [0, 2], [0], [0, 2, 3]]
+order_list = [[0, 1], [0, 1], [0, 1, 2], [0, 2], [0], [0], [0]]
 
 def output_data(f_out, seq, max_order_list, feature_map, generate_features):
     filler_length = 10
@@ -14,7 +14,6 @@ def output_data(f_out, seq, max_order_list, feature_map, generate_features):
         fs.append('LABEL')
         fs.append('W0_%s' % seq[i][1])
         fs.append('W-1_%s' % seq[i-1][1])
-        fs.append('W-2_%s' % seq[i-2][1])
         fs.append('W+1_%s' % seq[i+1][1])
         fs.append('W-10_%s_%s' % (seq[i-1][1], seq[i][1]))
         fs.append('W0+1_%s_%s' % (seq[i][1], seq[i+1][1]))
@@ -75,7 +74,7 @@ for (mode, filename_dic) in filename_dics.iteritems():
         raise 'You must provide filenames for both input and output.'
     print filename_dic['in'] + '\n'
     f_in = open(filename_dic['in'], 'r')
-    f_out = open(filename_dic['out'], 'w')
+    f_out = open(filename_dic['out'], 'wb')
     seq = []
     sentence_num = 0
     label_set = set()
