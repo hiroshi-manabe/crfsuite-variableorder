@@ -154,7 +154,7 @@ void crfvoc_delete(crfvo_context_t* ctx)
 {
     if (ctx != NULL) {
 		int i;
-		for (i = 0; i < ctx->max_items; ++i) {
+		for (i = 0; i < ctx->max_paths; ++i) {
 			free(ctx->path_scores[i]);
 		}
 		free(ctx->path_scores);
