@@ -373,8 +373,10 @@ void crfvoc_calc_feature_expectations(
         }
         path_scores[0].score = 0; /* alpha for an empty path is 0 */
         frexp(cur_temp_scores[0], &exponent_diff);
-        if (t < T-1) ctx->exponents[t+1] = ctx->exponents[t];
-        ctx->exponents[t+1] += exponent_diff;
+        if (t < T - 1) {
+            ctx->exponents[t + 1] = ctx->exponents[t];
+            ctx->exponents[t + 1] += exponent_diff;
+        }
         memcpy(prev_temp_scores, cur_temp_scores, sizeof(floatval_t) * n);
     }
     real_scale_diff = ldexp(1.0, -exponent_diff);
