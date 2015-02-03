@@ -59,20 +59,20 @@ struct tag_featureset {
 static int featureset_comp(const void *x, const void *y, size_t n, void *udata)
 {
     int ret = 0;
-	int i;
+    int i;
     const crfvol_feature_t* f1 = (const crfvol_feature_t*)x;
     const crfvol_feature_t* f2 = (const crfvol_feature_t*)y;
 
-	ret = COMP(f1->attr, f2->attr);
-	if (ret == 0) {
-		ret = COMP(f1->order, f2->order);
-		if (ret == 0) {
-			for (i = 0; i < f1->order; ++i) {
-				ret = COMP(f1->label_sequence[i], f2->label_sequence[i]);
-				if (ret) break;
-			}
-		}
-	}
+    ret = COMP(f1->attr, f2->attr);
+    if (ret == 0) {
+        ret = COMP(f1->order, f2->order);
+        if (ret == 0) {
+            for (i = 0; i < f1->order; ++i) {
+                ret = COMP(f1->label_sequence[i], f2->label_sequence[i]);
+                if (ret) break;
+            }
+        }
+    }
     return ret;
 }
 
@@ -142,10 +142,10 @@ void featureset_generate(crfvol_features_t* features, featureset_t* set)
 
 void crfvol_features_delete(crfvol_features_t* features)
 {
-	if (features) {
-		free(features->features);
-	}
-	free(features);
+    if (features) {
+        free(features->features);
+    }
+    free(features);
 }
 
 
@@ -167,22 +167,22 @@ static int progress(FILE *fpo, int prev, int current)
 }
 
 int crfvol_add_feature(
-	featureset_t* featureset,
-	int attr,
-	int order,
-	unsigned char label_sequence[]
-	)
+    featureset_t* featureset,
+    int attr,
+    int order,
+    unsigned char label_sequence[]
+    )
 {
-	int i, ret;
+    int i, ret;
     crfvol_feature_t f;
 
-	memset(&f, 0, sizeof(f));
-	f.attr = attr;
-	f.order = order;
-	for (i = 0; i < order; ++i) {
-		f.label_sequence[i] = label_sequence[i];
-	}
-	ret = featureset_add(featureset, &f);
-	if (ret < 0) return ret;
-	return featureset->num;
+    memset(&f, 0, sizeof(f));
+    f.attr = attr;
+    f.order = order;
+    for (i = 0; i < order; ++i) {
+        f.label_sequence[i] = label_sequence[i];
+    }
+    ret = featureset_add(featureset, &f);
+    if (ret < 0) return ret;
+    return featureset->num;
 }

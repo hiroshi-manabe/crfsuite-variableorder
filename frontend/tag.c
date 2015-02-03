@@ -196,12 +196,12 @@ output_result(
             labels->free_(labels, label);
         }
 
-		if (output->labels[i] < labels->num(labels)) {
-			labels->to_string(labels, output->labels[i], &label);
-		}
-		else {
-			label = "";
-		}
+        if (output->labels[i] < labels->num(labels)) {
+            labels->to_string(labels, output->labels[i], &label);
+        }
+        else {
+            label = "";
+        }
         fprintf(fpo, "%s", label);
         labels->free_(labels, label);
 

@@ -40,28 +40,28 @@
 #define MAX_ORDER 8
 
 typedef struct {
-	int    prev_path_index;
-	int    longest_suffix_index;
-	int    feature_count;
+    int    prev_path_index;
+    int    longest_suffix_index;
+    int    feature_count;
 } crfvo_path_t;
 
 typedef struct {
-	crfvo_path_t path;
-	floatval_t score;
-	floatval_t exp_weight;
-	int    best_path;
+    crfvo_path_t path;
+    floatval_t score;
+    floatval_t exp_weight;
+    int    best_path;
 } crfvo_path_score_t;
 
 /*
-	Preprocessed data.
+    Preprocessed data.
 */
 typedef struct {
-	int                num_paths;
-	crfvo_path_t*      paths;
-	int*               num_paths_by_label;
-	int                training_path_index;
-	int                num_fids;
-	int*               fids;
+    int                num_paths;
+    crfvo_path_t*      paths;
+    int*               num_paths_by_label;
+    int                training_path_index;
+    int                num_fids;
+    int*               fids;
 } crfvopd_t;
 
 /**
@@ -92,24 +92,24 @@ typedef struct {
      */
     int *labels;
 
-	int max_paths;
-	crfvo_path_score_t** path_scores; /* alpha -> alpha * beta -> sigma */
-	int*  num_paths;
-	int*  training_path_indexes;
-	int** num_paths_by_label;
-	int** fids_refs;
-	floatval_t* cur_temp_scores;  /* beta * W (backward) */
-	floatval_t* prev_temp_scores; /* gamma (forward) / delta (backward) */
+    int max_paths;
+    crfvo_path_score_t** path_scores; /* alpha -> alpha * beta -> sigma */
+    int*  num_paths;
+    int*  training_path_indexes;
+    int** num_paths_by_label;
+    int** fids_refs;
+    floatval_t* cur_temp_scores;  /* beta * W (backward) */
+    floatval_t* prev_temp_scores; /* gamma (forward) / delta (backward) */
     /**
      * The normalize factor for the input sequence.
      *    This is equivalent to the total scores of all paths from BOS to
      *    EOS, given an input sequence.
-	 *    norm_significand * 2^(norm_exponent)
+     *    norm_significand * 2^(norm_exponent)
      */
     floatval_t norm_significand;
-	int norm_exponent;
+    int norm_exponent;
 
-	/* exponents of scores */
+    /* exponents of scores */
     int *exponents;
 
 } crfvo_context_t;
@@ -180,11 +180,11 @@ void featureset_generate(crfvol_features_t* features, featureset_t* set);
 void featureset_delete(featureset_t* set);
 
 int crfvol_add_feature(
-	featureset_t* featureset,
-	int attr,
-	int order,
-	unsigned char label_sequence[]
-	);
+    featureset_t* featureset,
+    int attr,
+    int order,
+    unsigned char label_sequence[]
+    );
 
 
 /* crfvo_model.c */
@@ -259,19 +259,19 @@ struct tag_buffer_manager;
 typedef struct tag_buffer_manager buffer_manager_t;
 
 typedef struct tag_crfvopp {
-	buffer_manager_t* path_manager;
-	buffer_manager_t* node_manager;
-	buffer_manager_t* fid_list_manager;
+    buffer_manager_t* path_manager;
+    buffer_manager_t* node_manager;
+    buffer_manager_t* fid_list_manager;
 } crfvopp_t;
 
 crfvopp_t* crfvopp_new();
 void crfvopp_delete(crfvopp_t* pp);
 void crfvopp_preprocess_sequence(
-	crfvopp_t* pp,
-	const feature_refs_t* attrs,
-	const crfvol_feature_t* features,
-	const int L,
-	crf_sequence_t* seq);
+    crfvopp_t* pp,
+    const feature_refs_t* attrs,
+    const crfvol_feature_t* features,
+    const int L,
+    crf_sequence_t* seq);
 
 
 /**
@@ -282,7 +282,7 @@ struct tag_crfvol {
     int num_attributes;        /**< Number of distinct attributes (A). */
 
     int max_items;
-	int max_paths;
+    int max_paths;
 
     int num_sequences;
     crf_sequence_t* seqs;
@@ -304,10 +304,10 @@ struct tag_crfvol {
      *    Elements must be sorted by type, src, and dst in this order.
      */
     crfvol_feature_t* features;
-	featureset_t* featureset; /* Used in the process of creating features. */
+    featureset_t* featureset; /* Used in the process of creating features. */
 
     floatval_t *w;            /**< Array of w (feature weights) */
-	floatval_t *exp_weight;
+    floatval_t *exp_weight;
     floatval_t *prob;
 
     crf_params_t* params;
@@ -318,7 +318,7 @@ struct tag_crfvol {
 
     void *solver_data;
 
-	crfvopp_t *preprocessor;
+    crfvopp_t *preprocessor;
 };
 typedef struct tag_crfvol crfvol_t;
 

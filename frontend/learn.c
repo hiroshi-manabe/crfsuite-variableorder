@@ -48,7 +48,7 @@
 typedef struct {
     char* model;
     char* training;
-	char* features;
+    char* features;
     char* evaluation;
 
     int help;
@@ -78,7 +78,7 @@ static void learn_option_finish(learn_option_t* opt)
     int i;
 
     free(opt->model);
-	free(opt->features);
+    free(opt->features);
     free(opt->training);
     free(opt->evaluation);
 
@@ -199,7 +199,7 @@ int main_learn(int argc, char *argv[], const char *argv0)
     crf_evaluation_t eval;
     crf_trainer_t *trainer = NULL;
     crf_dictionary_t *attrs = NULL, *labels = NULL;
-	int num_features;
+    int num_features;
 
     /* Initializations. */
     learn_option_init(&opt);
@@ -220,12 +220,12 @@ int main_learn(int argc, char *argv[], const char *argv0)
         goto force_exit;
     }
 
-	/* Make sure that -f or --features option is provided. */
-	if (opt.features == NULL) {
+    /* Make sure that -f or --features option is provided. */
+    if (opt.features == NULL) {
         fprintf(fpe, "ERROR: You have to designate a file to read features from.\n");
         show_usage(fpo, argv0, command);
         goto force_exit;
-	}
+    }
 
     /* Set a training file. */
     if (arg_used < argc) {
@@ -302,7 +302,7 @@ int main_learn(int argc, char *argv[], const char *argv0)
     fprintf(fpo, "\n");
     fflush(fpo);
 
-	/* Read a test data if necessary */
+    /* Read a test data if necessary */
     if (opt.evaluation != NULL) {
         fp = fopen(opt.evaluation, "r");
         if (fp == NULL) {
@@ -324,7 +324,7 @@ int main_learn(int argc, char *argv[], const char *argv0)
         fprintf(fpo, "Seconds required: %.3f\n", (clk_current - clk_begin) / (double)CLOCKS_PER_SEC);
         fprintf(fpo, "\n");
         fflush(fpo);
-		crf_data_set_num_labels(&data_test, labels->num(labels));
+        crf_data_set_num_labels(&data_test, labels->num(labels));
     }
 
     /* Open the feature data. */
@@ -338,12 +338,12 @@ int main_learn(int argc, char *argv[], const char *argv0)
     /* Read the features */
     fprintf(fpo, "Reading the features\n");
     clk_begin = clock();
-	num_features = read_features(fp, fpo, labels, attrs, trainer);
-	clk_current = clock();
+    num_features = read_features(fp, fpo, labels, attrs, trainer);
+    clk_current = clock();
     if (fp != fpi) fclose(fp);
     fprintf(fpo, "Number of features: %d\n", num_features);
     fprintf(fpo, "Seconds required: %.3f\n",  (clk_current - clk_begin) / (double)CLOCKS_PER_SEC);
-	fprintf(fpo, "\n");
+    fprintf(fpo, "\n");
 
     /* Fill the supplementary information for the data. */
     crf_data_set_num_labels(&data_train, labels->num(labels));

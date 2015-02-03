@@ -104,14 +104,14 @@ void crf_item_init_n(crf_item_t* item, int num_contents)
 void crf_item_finish(crf_item_t* item)
 {
     free(item->contents);
-	free(item->preprocessed_data);
+    free(item->preprocessed_data);
     crf_item_init(item);
 }
 
 void crf_item_copy(crf_item_t* dst, const crf_item_t* src)
 {
     int i;
-	crf_item_init(dst);
+    crf_item_init(dst);
 
     dst->num_contents = src->num_contents;
     dst->max_contents = src->max_contents;
@@ -129,7 +129,7 @@ void crf_item_swap(crf_item_t* x, crf_item_t* y)
     x->max_contents = y->max_contents;
     x->label = y->label;
     x->contents = y->contents;
-	
+    
     y->num_contents = tmp.num_contents;
     y->max_contents = tmp.max_contents;
     y->label = tmp.label;
@@ -298,11 +298,11 @@ int  crf_data_totalitems(crf_data_t* data)
 
 void crf_data_set_num_labels(crf_data_t* data, int num_labels)
 {
-	int i;
-	for (i = 0; i < data->num_instances; ++i) {
-		data->instances[i].items[data->instances[i].num_items - 1].label = num_labels;
-	}
-	data->num_labels = num_labels;
+    int i;
+    for (i = 0; i < data->num_instances; ++i) {
+        data->instances[i].items[data->instances[i].num_items - 1].label = num_labels;
+    }
+    data->num_labels = num_labels;
 }
 
 void crf_output_init(crf_output_t* output)

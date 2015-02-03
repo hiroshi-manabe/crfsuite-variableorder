@@ -48,12 +48,12 @@
 struct tag_crfvot {
     int num_labels;            /**< Number of distinct output labels (L). */
     int num_attributes;        /**< Number of distinct attributes (A). */
-	int num_features;          /**< Number of features. */
+    int num_features;          /**< Number of features. */
 
-	feature_refs_t* attributes;
-	crfvol_feature_t* features;
-	floatval_t* exp_weight;
-	crfvopp_t* preprocessor;
+    feature_refs_t* attributes;
+    crfvol_feature_t* features;
+    floatval_t* exp_weight;
+    crfvopp_t* preprocessor;
 
     crfvom_t *model;        /**< CRF model. */
     crfvo_context_t *ctx;    /**< CRF context. */
@@ -61,37 +61,37 @@ struct tag_crfvot {
 
 crfvot_t *crfvot_new(crfvom_t* crfvom)
 {
-	int i;
+    int i;
     crfvot_t* crfvot = NULL;
 
     crfvot = (crfvot_t*)calloc(1, sizeof(crfvot_t));
     crfvot->num_labels = crfvom_get_num_labels(crfvom);
     crfvot->num_attributes = crfvom_get_num_attrs(crfvom);
-	crfvot->num_features = crfvom_get_num_features(crfvom);
+    crfvot->num_features = crfvom_get_num_features(crfvom);
     crfvot->model = crfvom;
     crfvot->ctx = crfvoc_new(crfvot->num_labels, 0, 0);
-	crfvot->attributes = (feature_refs_t*)malloc(crfvot->num_attributes * sizeof(feature_refs_t));
-	crfvot->features = (crfvol_feature_t*)malloc(crfvot->num_features * sizeof(crfvol_feature_t));
-	crfvot->exp_weight = (floatval_t*)malloc(crfvot->num_features * sizeof(floatval_t));
+    crfvot->attributes = (feature_refs_t*)malloc(crfvot->num_attributes * sizeof(feature_refs_t));
+    crfvot->features = (crfvol_feature_t*)malloc(crfvot->num_features * sizeof(crfvol_feature_t));
+    crfvot->exp_weight = (floatval_t*)malloc(crfvot->num_features * sizeof(floatval_t));
 
-	if (!crfvot->attributes || !crfvot->features || !crfvot->exp_weight) {
-		return 0;
-	}
+    if (!crfvot->attributes || !crfvot->features || !crfvot->exp_weight) {
+        return 0;
+    }
 
-	for (i = 0; i < crfvot->num_attributes; ++i) {
-		crfvom_get_attrref(crfvom, i, &crfvot->attributes[i]);
-	}
+    for (i = 0; i < crfvot->num_attributes; ++i) {
+        crfvom_get_attrref(crfvom, i, &crfvot->attributes[i]);
+    }
 
-	for (i = 0; i < crfvot->num_features; ++i) {
-		crfvom_feature_t f;
-		crfvom_get_feature(crfvom, i, &f);
-		crfvot->features[i].attr = f.attr;
-		memcpy(crfvot->features[i].label_sequence, f.label_sequence, MAX_ORDER);
-		crfvot->features[i].order = f.order;
-		crfvot->exp_weight[i] = exp(f.weight);
-	}
+    for (i = 0; i < crfvot->num_features; ++i) {
+        crfvom_feature_t f;
+        crfvom_get_feature(crfvom, i, &f);
+        crfvot->features[i].attr = f.attr;
+        memcpy(crfvot->features[i].label_sequence, f.label_sequence, MAX_ORDER);
+        crfvot->features[i].order = f.order;
+        crfvot->exp_weight[i] = exp(f.weight);
+    }
 
-	crfvot->preprocessor = crfvopp_new();
+    crfvot->preprocessor = crfvopp_new();
 
     return crfvot;
 }
@@ -99,7 +99,7 @@ crfvot_t *crfvot_new(crfvom_t* crfvom)
 void crfvot_delete(crfvot_t* crfvot)
 {
     crfvoc_delete(crfvot->ctx);
-	if (crfvot->preprocessor) crfvopp_delete(crfvot->preprocessor);
+    if (crfvot->preprocessor) crfvopp_delete(crfvot->preprocessor);
     free(crfvot);
 }
 
@@ -109,18 +109,18 @@ int crfvot_tag(crfvot_t* crfvot, crf_sequence_t *inst, crf_output_t* output)
     floatval_t score = 0;
     crfvo_context_t* ctx = crfvot->ctx;
 
-	crfvopp_preprocess_sequence(
-		crfvot->preprocessor,
-		crfvot->attributes,
-		crfvot->features,
-		crfvot->num_labels,
-		inst
-		);
+    crfvopp_preprocess_sequence(
+        crfvot->preprocessor,
+        crfvot->attributes,
+        crfvot->features,
+        crfvot->num_labels,
+        inst
+        );
 
-	crfvoc_set_num_items(ctx, inst->num_items, inst->max_paths);
+    crfvoc_set_num_items(ctx, inst->num_items, inst->max_paths);
 
-	crfvoc_set_context(ctx, inst);
-	crfvoc_set_weight(ctx, crfvot->exp_weight);
+    crfvoc_set_context(ctx, inst);
+    crfvoc_set_weight(ctx, crfvot->exp_weight);
 
     score = crfvoc_decode(ctx);
 

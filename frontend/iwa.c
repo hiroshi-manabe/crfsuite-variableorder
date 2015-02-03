@@ -186,7 +186,7 @@ static void read_field_unescaped(iwa_t* iwa, iwa_string_t* str)
             switch (d) {
             case ':':
             case '\\':
-			case '#':
+            case '#':
                 c = d;
                 get_char(iwa);
                 break;

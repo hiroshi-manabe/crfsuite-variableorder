@@ -64,7 +64,7 @@ enum {
     CRFERR_INCOMPATIBLE,
     CRFERR_INTERNAL_LOGIC,
     CRFERR_OVERFLOW,
-	CRFERR_INCORRECT_FEATURE_FREQS
+    CRFERR_INCORRECT_FEATURE_FREQS
 };
 
 /**
@@ -84,8 +84,8 @@ typedef struct {
     int                max_contents;    /**< Maximum number of contents. */
     crf_content_t*     contents;        /**< Array of the contents. */
     int                label;           /**< Output label. */
-	void*              preprocessed_data;
-	void               (*preprocessed_data_delete_func)(void*);
+    void*              preprocessed_data;
+    void               (*preprocessed_data_delete_func)(void*);
 } crf_item_t;
 
 /**
@@ -95,7 +95,7 @@ typedef struct {
     int            num_items;    /**< Number of items in the sequence. */
     int            max_items;    /**< Maximum number of items (internal use). */
     crf_item_t*    items;        /**< Array of the items. */
-	int            max_paths;    /* preprocessed data */
+    int            max_paths;    /* preprocessed data */
 } crf_sequence_t;
 
 /**
@@ -210,7 +210,7 @@ struct tag_crf_trainer {
     void (*set_message_callback)(crf_trainer_t* trainer, void* instance, crf_logging_callback cbm);
     void (*set_evaluate_callback)(crf_trainer_t* trainer, void* instance, crf_evaluate_callback cbe);
 
-	int (*add_feature)(crf_trainer_t* trainer, int attr, int order, unsigned char label_sequence[]);
+    int (*add_feature)(crf_trainer_t* trainer, int attr, int order, unsigned char label_sequence[]);
     int (*train)(crf_trainer_t* trainer, void* instances, int num_instances, int num_labels, int num_attributes);
     int (*save)(crf_trainer_t* trainer, const char *filename, crf_dictionary_t* attrs, crf_dictionary_t* labels);
 };

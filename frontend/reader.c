@@ -67,7 +67,7 @@ void read_data(FILE *fpi, FILE *fpo, crf_data_t* data, crf_dictionary_t* attrs, 
     long filesize = 0, begin = 0, offset = 0;
     int prev = 0, current = 0;
 
-	/* Initialize the instance.*/
+    /* Initialize the instance.*/
     crf_sequence_init(&inst);
 
     /* Obtain the file size. */
@@ -101,11 +101,11 @@ void read_data(FILE *fpi, FILE *fpo, crf_data_t* data, crf_dictionary_t* attrs, 
             break;
         case IWA_ITEM:
             if (lid == -1) {
-				if (!strcmp(token->attr, "__BOS_EOS__")) {
-					lid = -2; /* EOS : to be overwritten by L */
-				} else {
-					lid = labels->get(labels, token->attr);
-				}
+                if (!strcmp(token->attr, "__BOS_EOS__")) {
+                    lid = -2; /* EOS : to be overwritten by L */
+                } else {
+                    lid = labels->get(labels, token->attr);
+                }
             } else {
                 crf_content_init(&cont);
                 cont.aid = attrs->get(attrs, token->attr);
@@ -129,29 +129,29 @@ void read_data(FILE *fpi, FILE *fpo, crf_data_t* data, crf_dictionary_t* attrs, 
     }
     progress(fpo, prev, 100);
     fprintf(fpo, "\n");
-	iwa_delete(iwa);
+    iwa_delete(iwa);
 }
 
 int read_features(
-	FILE* fpi,
-	FILE* fpo,
-	crf_dictionary_t* labels,
+    FILE* fpi,
+    FILE* fpo,
+    crf_dictionary_t* labels,
     crf_dictionary_t* attrs,
-	crf_trainer_t* trainer
+    crf_trainer_t* trainer
     )
 {
     const iwa_token_t* token = NULL;
     iwa_t* iwa = NULL;
     long filesize = 0, begin = 0, offset = 0;
     int prev = 0, current = 0;
-	int L = labels->num(labels);
-	int attr = -1;
-	int order = 0;
-	unsigned char* label_sequence;
-	int max_order = 256;
-	int ret = 0;
+    int L = labels->num(labels);
+    int attr = -1;
+    int order = 0;
+    unsigned char* label_sequence;
+    int max_order = 256;
+    int ret = 0;
 
-	label_sequence = calloc(max_order, sizeof(unsigned char));
+    label_sequence = calloc(max_order, sizeof(unsigned char));
 
     /* Obtain the file size. */
     begin = ftell(fpi);
@@ -163,9 +163,9 @@ int read_features(
     fflush(fpo);
     prev = 0;
 
-	/* Loop over the sequences in the training data. */
+    /* Loop over the sequences in the training data. */
 
-	iwa = iwa_reader(fpi);
+    iwa = iwa_reader(fpi);
     while (token = iwa_read(iwa), token != NULL) {
         /* Progress report. */
         int offset = ftell(fpi);
@@ -175,30 +175,30 @@ int read_features(
         switch (token->type) {
         case IWA_BOI:
             /* Initialize a feature. */
-			memset(label_sequence, 0, max_order * sizeof(unsigned char));
-			attr = -1;
-			order = 0;
+            memset(label_sequence, 0, max_order * sizeof(unsigned char));
+            attr = -1;
+            order = 0;
             break;
         case IWA_EOI:
             /* Append the feature to the feature set. */
-			if (attr != -1 && order != -1) ret = trainer->add_feature(trainer, attr, order, label_sequence);
+            if (attr != -1 && order != -1) ret = trainer->add_feature(trainer, attr, order, label_sequence);
             break;
         case IWA_ITEM:
             if (attr == -1) {
-				attr = attrs->get(attrs, token->attr);
+                attr = attrs->get(attrs, token->attr);
             } else {
-				int label = labels->to_id(labels, token->attr);
-				if (label < 0) label = L;
-				if (order >= max_order) {
-					unsigned char* t = realloc(label_sequence, max_order * 2);
-					if (t == 0) {
-						free(label_sequence);
-						return CRFERR_OUTOFMEMORY;
-					}
-					label_sequence = t;
-				}
-				label_sequence[order] = label;
-				order++;
+                int label = labels->to_id(labels, token->attr);
+                if (label < 0) label = L;
+                if (order >= max_order) {
+                    unsigned char* t = realloc(label_sequence, max_order * 2);
+                    if (t == 0) {
+                        free(label_sequence);
+                        return CRFERR_OUTOFMEMORY;
+                    }
+                    label_sequence = t;
+                }
+                label_sequence[order] = label;
+                order++;
             }
             break;
         case IWA_NONE:
@@ -210,8 +210,8 @@ int read_features(
     }
     progress(fpo, prev, 100);
     fprintf(fpo, "\n");
-	iwa_delete(iwa);
+    iwa_delete(iwa);
 
-	free(label_sequence);
-	return ret;
+    free(label_sequence);
+    return ret;
 }

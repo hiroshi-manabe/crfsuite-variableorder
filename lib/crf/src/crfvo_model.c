@@ -560,7 +560,7 @@ int crfvomw_close_features(crfvomw_t* writer)
 
     /* Move the file pointer to the tail. */
     fseek(fp, end, SEEK_SET);
-	writer->header.num_features = hfeat->num;
+    writer->header.num_features = hfeat->num;
 
     /* Uninitialize. */
     free(hfeat);
@@ -586,7 +586,7 @@ int crfvomw_put_feature(crfvomw_t* writer, int fid, const crfvom_feature_t* f)
 
     write_uint32(fp, f->order);
     write_uint32(fp, f->attr);
-	write_uint8_array(fp, (uint8_t*)f->label_sequence, MAX_ORDER);
+    write_uint8_array(fp, (uint8_t*)f->label_sequence, MAX_ORDER);
     write_float(fp, f->weight);
     ++hfeat->num;
     return 0;
@@ -635,7 +635,7 @@ crfvom_t* crfvom_new(const char *filename)
     p += read_uint32(p, &header->off_features);
     p += read_uint32(p, &header->off_labels);
     p += read_uint32(p, &header->off_attrs);
-	p += read_uint32(p, &header->off_attrrefs);
+    p += read_uint32(p, &header->off_attrrefs);
     model->header = header;
 
     model->labels = cqdb_reader(
@@ -766,7 +766,7 @@ int crfvom_get_feature(crfvom_t* model, int fid, crfvom_feature_t* f)
     f->order = val;
     p += read_uint32(p, &val);
     f->attr = val;
-	p += read_uint8_array(p, f->label_sequence, MAX_ORDER);
+    p += read_uint8_array(p, f->label_sequence, MAX_ORDER);
     p += read_float(p, &f->weight);
     return 0;
 }
@@ -843,11 +843,11 @@ void crfvom_dump(crfvom_t* crfvom, FILE *fp)
 #endif
             attr = crfvom_to_attr(crfvom, f.attr);
             fprintf(fp, "       %s -->", attr, to, f.weight);
-			for (k = 0; k < f.order; ++k) {
-				to = crfvom_to_label(crfvom, f.label_sequence[k]);
-				fprintf(fp, " %s", to);
-			}
-			fprintf(fp, " : %f\n", f.weight);
+            for (k = 0; k < f.order; ++k) {
+                to = crfvom_to_label(crfvom, f.label_sequence[k]);
+                fprintf(fp, " %s", to);
+            }
+            fprintf(fp, " : %f\n", f.weight);
         }
     }
     fprintf(fp, "}\n");

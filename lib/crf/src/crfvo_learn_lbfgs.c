@@ -88,15 +88,15 @@ static lbfgsfloatval_t lbfgs_evaluate(
     crf_sequence_t* seqs = crfvot->seqs;
     const int N = crfvot->num_sequences;
 
-	lbfgs_internal_t *lbfgsi = LBFGS_INTERNAL(crfvot);
+    lbfgs_internal_t *lbfgsi = LBFGS_INTERNAL(crfvot);
 
-	if (!crfvot->exp_weight) {
-		crfvot->exp_weight = (floatval_t*)calloc(crfvot->num_features, sizeof(floatval_t));
-	}
+    if (!crfvot->exp_weight) {
+        crfvot->exp_weight = (floatval_t*)calloc(crfvot->num_features, sizeof(floatval_t));
+    }
 
-	for (i = 0; i < crfvot->num_features; ++i) {
-		crfvot->exp_weight[i] = exp(x[i]);
-	}
+    for (i = 0; i < crfvot->num_features; ++i) {
+        crfvot->exp_weight[i] = exp(x[i]);
+    }
 
     /* Set the gradient vector. */
     lbfgsi->g = g;
@@ -117,7 +117,7 @@ static lbfgsfloatval_t lbfgs_evaluate(
         /* Set label sequences and state scores. */
         crfvoc_set_context(crfvot->ctx, &seqs[i]);
 
-		/*crfvoc_debug_context(crfvot->ctx, stdout);*/
+        /*crfvoc_debug_context(crfvot->ctx, stdout);*/
         /*printf("lognorm = %f\n", crfvot->ctx->log_norm);*/
 
         crfvoc_set_weight(crfvot->ctx, crfvot->exp_weight);
